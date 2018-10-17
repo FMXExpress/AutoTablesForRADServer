@@ -1,0 +1,278 @@
+object DelphiSDKFrame: TDelphiSDKFrame
+  Size.Width = 531.000000000000000000
+  Size.Height = 451.000000000000000000
+  Size.PlatformDefault = False
+  object HeaderFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      '    function {#EndPoint#}{#ParamString#}: TBytesStream;')
+    Align = Bottom
+    Position.Y = 20.000000000000000000
+    Size.Width = 531.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Viewport.Width = 527.000000000000000000
+    Viewport.Height = 20.000000000000000000
+  end
+  object GetFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      'function TSDKClient.{#EndPoint#}{#ParamString#}: TBytesStream;'
+      'begin'
+      '   if Self.LoginAPI(FUserName,FPassword) then'
+      
+        '     Result := Self.GetAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#Quer' +
+        'yString#});'
+      'end;')
+    Align = Bottom
+    Position.Y = 44.000000000000000000
+    Size.Width = 531.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Viewport.Width = 527.000000000000000000
+    Viewport.Height = 84.000000000000000000
+  end
+  object SDKMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      'unit {#Filename#};'
+      ''
+      'interface'
+      ''
+      'uses'
+      
+        '  System.SysUtils, System.Classes, System.JSON, FireDAC.Stan.Int' +
+        'f, System.StrUtils,'
+      
+        '  FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, F' +
+        'ireDAC.DatS,'
+      
+        '  FireDAC.Phys.Intf, FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.Da' +
+        'taSet,'
+      
+        '  FireDAC.Comp.Client, REST.Client, REST.Backend.Endpoint, REST.' +
+        'Types,'
+      
+        '  REST.Backend.EMSProvider, REST.Backend.ServiceComponents, REST' +
+        '.Backend.Providers;'
+      ''
+      'type'
+      '  TSDKClient = class(TComponent)'
+      '  private'
+      '    { Private declarations }'
+      '    FUserName, FPassword: String;'
+      '  public'
+      '    { Public declarations }'
+      '    FEMSProvider: TEMSProvider;'
+      '    FBackendAuth: TBackendAuth;'
+      ''
+      '    constructor Create(AOwner: TComponent);'
+      '    destructor Destroy;'
+      ''
+      
+        '    function LoginAPI(const UserName, Password: String): Boolean' +
+        ';'
+      '    function GetAPI(const APath: String): TBytesStream;'
+      
+        '    function PostAPI(const APath: String; ABytesStream: TBytesSt' +
+        'ream): TBytesStream;'
+      '    function DeleteAPI(const APath: String): TBytesStream;'
+      ''
+      '{#SDKHeaderList#}'
+      '  published'
+      '    property Username: String read FUsername write FUsername;'
+      '    property Password: String read FPassword write FPassword;'
+      '  end;'
+      ''
+      'implementation'
+      ''
+      ''
+      'constructor TSDKClient.Create(AOwner: TComponent);'
+      'begin'
+      '  inherited Create(AOwner);'
+      '  FEMSProvider := TEMSProvider.Create(AOwner);'
+      '  FBackendAuth := TBackendAuth.Create(AOwner);'
+      '  FEMSProvider.URLHost := '#39'{#URLHost#}'#39';'
+      '  FEMSProvider.URLPort := StrToInt('#39'{#URLPort#}'#39');'
+      '  FEMSProvider.URLBasePath := '#39#39';'
+      '  FEMSProvider.URLProtocol := '#39'http'#39';'
+      '  FBackendAuth.Provider := FEMSProvider;'
+      '  FUserName := '#39'{#Username#}'#39';'
+      '  FPassword := '#39'{#Password#}'#39';'
+      'end;'
+      ''
+      'destructor TSDKClient.Destroy;'
+      'begin'
+      '  inherited Destroy;'
+      '  FBackendAuth.DisposeOf;'
+      'end;'
+      ''
+      
+        'function TSDKClient.LoginAPI(const UserName, Password: String): ' +
+        'Boolean;'
+      'begin'
+      '  if not FBackendAuth.LoggedIn then'
+      '    begin'
+      '      FBackendAuth.UserName := UserName;'
+      '      FBackendAuth.Password := Password;'
+      '      FBAckendAuth.Login;'
+      ''
+      '      if FBackendAuth.LoggedIn then'
+      '        begin'
+      '          if FBackendAuth.LoggedInToken = '#39#39' then'
+      '            begin'
+      
+        '              FBackendAuth.Authentication := TBackendAuthenticat' +
+        'ion.Default;'
+      '              Result := False;'
+      '            end'
+      '          else'
+      '            begin'
+      
+        '              FBackendAuth.Authentication := TBackendAuthenticat' +
+        'ion.Session;'
+      '              Result := True;'
+      '            end;'
+      '        end;'
+      '    end'
+      '  else'
+      '    Result := True;'
+      'end;'
+      ''
+      'function TSDKClient.GetAPI(const APath: String): TBytesStream;'
+      'var'
+      '  EndPoint: TBackendEndpoint;'
+      'begin'
+      '  Result := TBytesStream.Create;'
+      '  EndPoint := TBackendEndpoint.Create(Self);'
+      '  EndPoint.Provider := FEMSProvider;'
+      '  EndPoint.Auth := FBackendAuth;'
+      '  try'
+      '    EndPoint.Resource := APath;'
+      '    EndPoint.Method := TRESTRequestMethod.rmGET;'
+      '    EndPoint.Execute;'
+      '    Result := TBytesStream.Create(EndPoint.Response.RawBytes);'
+      '    if EndPoint.Response.StatusCode>=400 then'
+      '      begin'
+      '        raise Exception.Create(EndPoint.Response.StatusText);'
+      '      end;'
+      '  finally'
+      '    EndPoint.DisposeOf;'
+      '  end;'
+      'end;'
+      ''
+      
+        'function TSDKClient.PostAPI(const APath: String; ABytesStream: T' +
+        'BytesStream): TBytesStream;'
+      'var'
+      '  EndPoint: TBackendEndpoint;'
+      'begin'
+      '  EndPoint := TBackendEndpoint.Create(Self);'
+      '  EndPoint.Provider := FEMSProvider;'
+      '  EndPoint.Auth := FBackendAuth;'
+      '  try'
+      '    EndPoint.Resource := APath;'
+      '    EndPoint.Method := TRESTRequestMethod.rmPOST;'
+      
+        '    EndPoint.AddBody(ABytesStream,TRESTContentType.ctAPPLICATION' +
+        '_JSON);'
+      '    EndPoint.Execute;'
+      '    Result := TBytesStream.Create(EndPoint.Response.RawBytes);'
+      '    if EndPoint.Response.StatusCode>=400 then'
+      '      begin'
+      '        raise Exception.Create(EndPoint.Response.StatusText);'
+      '      end;'
+      '  finally'
+      '    EndPoint.DisposeOf;'
+      '  end;'
+      'end;'
+      ''
+      
+        'function TSDKClient.DeleteAPI(const APath: String): TBytesStream' +
+        ';'
+      'var'
+      '  EndPoint: TBackendEndpoint;'
+      'begin'
+      '  Result := TBytesStream.Create;'
+      '  EndPoint := TBackendEndpoint.Create(Self);'
+      '  EndPoint.Provider := FEMSProvider;'
+      '  EndPoint.Auth := FBackendAuth;'
+      '  try'
+      '    EndPoint.Resource := APath;'
+      '    EndPoint.Method := TRESTRequestMethod.rmDELETE;'
+      '    EndPoint.Execute;'
+      '    Result := TBytesStream.Create(EndPoint.Response.RawBytes);'
+      '    if EndPoint.Response.StatusCode>=400 then'
+      '      begin'
+      '        raise Exception.Create(EndPoint.Response.StatusText);'
+      '      end;'
+      '  finally'
+      '    EndPoint.DisposeOf;'
+      '  end;'
+      'end;'
+      ''
+      '{#SDKFunctionList#}'
+      ''
+      'end.')
+    Align = Bottom
+    Position.Y = 308.000000000000000000
+    Size.Width = 531.000000000000000000
+    Size.Height = 143.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    Viewport.Width = 511.000000000000000000
+    Viewport.Height = 139.000000000000000000
+  end
+  object PostFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      'function TSDKClient.{#EndPoint#}{#ParamString#}: TBytesStream;'
+      'begin'
+      '  if Self.LoginAPI(FUserName,FPassword) then'
+      
+        '    Result := Self.PostAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#Quer' +
+        'yString#},ABytesStream);'
+      'end;')
+    Align = Bottom
+    Position.Y = 132.000000000000000000
+    Size.Width = 531.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Viewport.Width = 527.000000000000000000
+    Viewport.Height = 84.000000000000000000
+  end
+  object DeleteFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      'function TSDKClient.{#EndPoint#}{#ParamString#}: TBytesStream;'
+      'begin'
+      '   if Self.LoginAPI(FUserName,FPassword) then'
+      
+        '     Result := Self.DeleteAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#Q' +
+        'ueryString#});'
+      'end;')
+    Align = Bottom
+    Position.Y = 220.000000000000000000
+    Size.Width = 531.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Viewport.Width = 527.000000000000000000
+    Viewport.Height = 84.000000000000000000
+  end
+  object ActionList1: TActionList
+    Left = 80
+    Top = 96
+    object GenerateSDKAction: TAction
+      Text = 'GenerateSDKAction'
+    end
+  end
+end

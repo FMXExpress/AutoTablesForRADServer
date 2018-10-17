@@ -1,0 +1,212 @@
+object PickerForm: TPickerForm
+  Left = 0
+  Top = 0
+  Caption = 'Picker'
+  ClientHeight = 480
+  ClientWidth = 640
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object ToolBar1: TToolBar
+    Size.Width = 640.000000000000000000
+    Size.Height = 40.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object HeaderText: TText
+      Align = Contents
+      Size.Width = 640.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object BackBTN: TButton
+      Align = Left
+      Size.Width = 97.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = 'backtoolbutton'
+      TabOrder = 0
+      Text = 'Back'
+      OnClick = BackBTNClick
+    end
+    object OtherBTN: TButton
+      Align = Right
+      Position.X = 560.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = 'toolbuttonright'
+      TabOrder = 1
+      Text = 'Other'
+      OnClick = OtherBTNClick
+    end
+  end
+  object TabControl1: TTabControl
+    Align = Client
+    Size.Width = 640.000000000000000000
+    Size.Height = 440.000000000000000000
+    Size.PlatformDefault = False
+    TabIndex = 0
+    TabOrder = 5
+    TabPosition = None
+    Sizes = (
+      640s
+      440s
+      640s
+      440s)
+    object SelectTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = True
+      Size.Width = 8.000000000000000000
+      Size.Height = 8.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'SelectTab'
+      ExplicitSize.cx = 8.000000000000000000
+      ExplicitSize.cy = 8.000000000000000000
+      object PickerLV: TListView
+        ItemAppearanceClassName = 'TListItemAppearance'
+        ItemEditAppearanceClassName = 'TListItemShowCheckAppearance'
+        HeaderAppearanceClassName = 'TListHeaderObjects'
+        FooterAppearanceClassName = 'TListHeaderObjects'
+        AlternatingColors = True
+        Align = Client
+        Size.Width = 640.000000000000000000
+        Size.Height = 440.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        CanSwipeDelete = False
+        OnItemClickEx = PickerLVItemClickEx
+        SearchVisible = True
+      end
+    end
+    object OtherTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 8.000000000000000000
+      Size.Height = 8.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'OtherTab'
+      ExplicitSize.cx = 8.000000000000000000
+      ExplicitSize.cy = 8.000000000000000000
+      object OtherLayout: TLayout
+        Align = Top
+        Size.Width = 640.000000000000000000
+        Size.Height = 50.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 6
+        object Layout12: TLayout
+          Align = Left
+          Size.Width = 169.000000000000000000
+          Size.Height = 50.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          object Text6: TText
+            Align = Client
+            Size.Width = 169.000000000000000000
+            Size.Height = 50.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Other'
+            TextSettings.Font.StyleExt = {00070000000000000004000000}
+          end
+        end
+        object OtherEdit: TEdit
+          Touch.InteractiveGestures = [LongTap, DoubleTap]
+          Align = Client
+          TabOrder = 1
+          Margins.Left = 10.000000000000000000
+          Margins.Top = 10.000000000000000000
+          Margins.Right = 10.000000000000000000
+          Margins.Bottom = 10.000000000000000000
+          Size.Width = 371.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          object ClearEditButton2: TClearEditButton
+            CanFocus = False
+            Cursor = crArrow
+            Size.Width = 28.000000000000000000
+            Size.Height = 26.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+          end
+        end
+        object SaveBTN: TButton
+          Align = Right
+          Position.X = 560.000000000000000000
+          Size.Width = 80.000000000000000000
+          Size.Height = 50.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'Save'
+          OnClick = SaveBTNClick
+        end
+      end
+    end
+  end
+  object BindSourceDBTableName: TBindSourceDB
+    DataSet = MainForm.TableNameMemTable
+    ScopeMappings = <>
+    Left = 336
+    Top = 112
+  end
+  object BindingsListCB: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    Left = 44
+    Top = 45
+    object LinkFillControlToField: TLinkFillControlToField
+      Category = 'Quick Bindings'
+      Control = PickerLV
+      Track = False
+      FillDataSource = BindSourceDBTableName
+      FillDisplayFieldName = 'TableName'
+      AutoFill = True
+      FillExpressions = <>
+      FillHeaderExpressions = <>
+      FillBreakGroups = <>
+    end
+    object SCBindLink: TBindLink
+      Category = 'Links'
+      SourceMemberName = 'Signatures'
+      SourceComponent = BindSourceDBGroups
+      ParseExpressions = <
+        item
+          ControlExpression = 'Lines.Text'
+          SourceExpression = 'AsString'
+        end>
+      FormatExpressions = <
+        item
+          ControlExpression = 'Lines.Text'
+          SourceExpression = 'AsString'
+        end>
+      ClearExpressions = <>
+      Track = False
+    end
+  end
+  object BindSourceDBRequestType: TBindSourceDB
+    DataSet = MainForm.RequestTypeMemTable
+    ScopeMappings = <>
+    Left = 208
+    Top = 104
+  end
+  object BindSourceDBGroups: TBindSourceDB
+    DataSet = MainForm.GroupsMemTable
+    ScopeMappings = <>
+    Left = 72
+    Top = 170
+  end
+  object BindSourceDBAction: TBindSourceDB
+    DataSet = MainForm.FDMemTableAction
+    ScopeMappings = <>
+    Left = 256
+    Top = 216
+  end
+end
