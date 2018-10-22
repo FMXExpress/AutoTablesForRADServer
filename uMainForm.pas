@@ -22,11 +22,11 @@ uses
   FireDAC.Phys.IBDef, FMX.ListView.Types, FMX.ListView.Appearances,
   FMX.ListView.Adapters.Base, FMX.ListView, REST.Backend.EMSApi,
   FireDAC.Phys.IBBase, FireDAC.Comp.UI, FMX.ListBox, System.StrUtils,
-  FMX.Platform
-  {$IFDEF MSWINDOWS}
-  , Windows, ShellAPI, System.Actions, FMX.ActnList, FMX.Effects,
+  FMX.Platform, System.Zip, System.Actions, FMX.ActnList, FMX.Effects,
   FMX.Filter.Effects, FireDAC.Comp.ScriptCommands, FireDAC.Stan.Util,
-  FireDAC.Comp.Script, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef
+  FireDAC.Comp.Script
+  {$IFDEF MSWINDOWS}
+  , Windows, ShellAPI, Win.WebBrowser, FMX.WebBrowser
   {$ENDIF}
   ;
 
@@ -78,7 +78,7 @@ type
     TabItem3: TTabItem;
     ToolBar1: TToolBar;
     TabItem4: TTabItem;
-    TabItem5: TTabItem;
+    CompleteTab: TTabItem;
     Rectangle1: TRectangle;
     Rectangle2: TRectangle;
     Text1: TText;
@@ -118,9 +118,6 @@ type
     FDPhysIBDriverLink1: TFDPhysIBDriverLink;
     FDGUIxWaitCursor1: TFDGUIxWaitCursor;
     FDConnection: TFDConnection;
-    Layout13: TLayout;
-    Rectangle8: TRectangle;
-    Text4: TText;
     Layout14: TLayout;
     Rectangle9: TRectangle;
     Text5: TText;
@@ -137,7 +134,7 @@ type
     LinkFillControlToField4: TLinkFillControlToField;
     BindSourceDB1: TBindSourceDB;
     LinkFillControlToField5: TLinkFillControlToField;
-    TabItem6: TTabItem;
+    Step4Tab: TTabItem;
     ActionListBox: TListBox;
     RTListListBox: TListBox;
     TablesListBox: TListBox;
@@ -147,10 +144,8 @@ type
     Rectangle11: TRectangle;
     Text7: TText;
     EndPointLoadPathEdit: TEdit;
-    EndPointSavePathEdit: TEdit;
     Rectangle12: TRectangle;
     Layout18: TLayout;
-    DesignTimeConnectRect: TRectangle;
     CustomMethodMemo: TMemo;
     Label17: TLabel;
     Label18: TLabel;
@@ -167,7 +162,6 @@ type
     EMSProviderTemplateMemo: TMemo;
     BackendEndpointTemplateMemo: TMemo;
     ClientComponentsMemo: TMemo;
-    Label29: TLabel;
     EPOpenDialog: TOpenDialog;
     EPSaveDialog: TSaveDialog;
     TabControl2: TTabControl;
@@ -183,7 +177,7 @@ type
     LinkControlToField10: TLinkControlToField;
     LinkControlToField11: TLinkControlToField;
     Splitter1: TSplitter;
-    TabItem7: TTabItem;
+    Step6Tab: TTabItem;
     GenClientBGRect: TRectangle;
     Layout20: TLayout;
     GenClientRectBTN: TRectangle;
@@ -315,6 +309,17 @@ type
     FDScriptExec: TFDScript;
     Label63: TLabel;
     Label64: TLabel;
+    OutputTabControl: TTabControl;
+    DocsTab: TTabItem;
+    OutputTab: TTabItem;
+    Rectangle6: TRectangle;
+    Layout13: TLayout;
+    Rectangle8: TRectangle;
+    Text4: TText;
+    EndPointSavePathEdit: TEdit;
+    WBDocs: TWebBrowser;
+    DesignTimeConnectRect: TRectangle;
+    Label29: TLabel;
     procedure RequestTypeEditClick(Sender: TObject);
     procedure TableNameEditClick(Sender: TObject);
     procedure GroupsEditClick(Sender: TObject);
@@ -343,6 +348,7 @@ type
     procedure StringGrid1CellDblClick(const Column: TColumn;
       const Row: Integer);
     procedure SampleDBRectBTNClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     procedure UpdateSQLLabel;
@@ -366,6 +372,9 @@ type
     SDKPath = 'SDK';
     OPLangPath = 'Object Pascal';
     OutputPath = 'Output';
+    DocsPath = 'Docs';
+    SwaggerUIZip = 'swagger-ui.zip';
+    SwaggerIndexFile = 'index.html';
     ServerTemplateDPKFile = 'AutoTablesForRADServer.dpk';
     ServerTemplateDPROJFile = 'AutoTablesForRADServer.dproj';
     ServerTemplateDFMFile = 'uMainServer.dfm';
@@ -693,8 +702,32 @@ begin
     end;
 end;
 
-procedure TMainForm.FormCreate(Sender: TObject);
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+{$IFDEF MSWINDOWS}
+var
+  WBE: TWinWebBrowserEmulation;
+{$ENDIF}
 begin
+  {$IFDEF MSWINDOWS}
+  WBE := TWinWebBrowserEmulation.Create;
+  WBE.RestoreBrowserEmulation;
+  WBE.Free;
+  {$ENDIF}
+
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+{$IFDEF MSWINDOWS}
+var
+  WBE: TWinWebBrowserEmulation;
+{$ENDIF}
+begin
+  {$IFDEF MSWINDOWS}
+  WBE := TWinWebBrowserEmulation.Create;
+  WBE.EnableBrowserEmulation(TInternetExplorerVersion.IE11);
+  WBE.Free;
+  {$ENDIF}
+
   DesignTimeConnectRect.Visible := False;
   EndPointLoadPathEdit.Text := TPath.Combine(TPath.Combine(TPath.GetSharedDocumentsPath,'Embarcadero' + PathDelim + 'EMS' + PathDelim),EndPointFile);
   EndPointSavePathEdit.Text := TPath.Combine(TPath.Combine(TPath.GetSharedDocumentsPath,'Embarcadero' + PathDelim + 'EMS' + PathDelim),EndPointFile);
@@ -879,7 +912,7 @@ begin
     end;
 
   if TablesCount>0 then
-    TabControl1.ActiveTab := TabItem6;
+    TabControl1.ActiveTab := Step4Tab;
 end;
 
 procedure TMainForm.GetGroupsRectBTNClick(Sender: TObject);
@@ -923,7 +956,7 @@ QueryString: String;
 ParamsContent: String;
 CompCount: Integer;
 begin
-if TabControl1.ActiveTab=TabItem5 then
+if TabControl1.ActiveTab=CompleteTab then
   begin
     CompCount := 1;
     EndPointsMemo.Lines.Text := '';
@@ -979,7 +1012,7 @@ if TabControl1.ActiveTab=TabItem5 then
     ClientComponentsMemo.Lines.Append(EMSProviderTemplateMemo.Lines.Text);
     SL.Free;
   end;
-if TabControl1.ActiveTab=TabItem6 then
+if TabControl1.ActiveTab=Step4Tab then
   begin
      for I := 0 to RTListListBox.Items.Count-1 do
       begin
@@ -1308,6 +1341,9 @@ procedure TMainForm.GenOpenAPIRectBTNClick(Sender: TObject);
 var
 SL: TStringList;
 AOutputPath: String;
+ADocsArchive: String;
+ADocsPath: String;
+DocsFile: TStringList;
 begin
   AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
   if TDirectory.Exists(AOutputPath)=False then
@@ -1319,9 +1355,36 @@ begin
   SL.Text := OpenAPIDM.CreateDoc(EndPointTable,FDMemTableInfo);
   SL.SaveToFile(TPath.Combine(AOutputPath,OpenAPIDocsFile));
   OpenAPIMemo.Lines.Text := SL.Text;
+
+  ADocsArchive := TPath.Combine(TemplatePath,SwaggerUIZip);
+  ADocsPath := TPath.Combine(AOutputPath,DocsPath);
+
+  if TDirectory.Exists(ADocsPath)=False then
+    begin
+      TDirectory.CreateDirectory(ADocsPath);
+    end;
+
+  if TFile.Exists(ADocsArchive) then
+    begin
+      TZipFile.ExtractZipFile(ADocsArchive,ADocsPath);
+    end;
+
+  SL.SaveToFile(TPath.Combine(ADocsPath,OpenAPIDocsFile));
+
+  DocsFile := TStringList.Create;
+  DocsFile.LoadFromFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
+  DocsFile.Text := DocsFile.Text.Replace('''#apispec.json#''',SL.Text);
+  DocsFile.SaveToFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
+  DocsFile.Free;
+
   SL.Free;
 
   OpenDirectory(AOutputPath);
+
+  TabControl1.ActiveTab := CompleteTab;
+  OutputTabControl.ActiveTab := DocsTab;
+
+  WBDocs.URL := TPath.Combine(ADocsPath,SwaggerIndexFile);
 end;
 
 function TMainForm.GetQueryStringList(ADataSet: TFDDataSet): String;

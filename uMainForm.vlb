@@ -7,7 +7,7 @@ Coordinates=10,10,99,36
 Visible=False
 
 []
-Coordinates=617,78,82,51
+Coordinates=0,298,67,36
 Visible=True
 
 [BindingsList1]
@@ -150,9 +150,6 @@ Coordinates=434,521,47,58
 [TenantSecretEdit]
 Coordinates=315,521,114,58
 
-[TabItem5]
-Coordinates=157,552,69,36
-
 [FDStanStorageJSONLink1]
 Coordinates=1053,1,168,36
 
@@ -218,17 +215,8 @@ Coordinates=66,331,132,36
 [Text5]
 Coordinates=28,242,47,58
 
-[Rectangle8]
-Coordinates=314,202,80,36
-
-[Layout13]
-Coordinates=0,298,67,36
-
 [Rectangle9]
 Coordinates=421,1,80,36
-
-[Text4]
-Coordinates=320,40,47,58
 
 [Layout14]
 Coordinates=162,623,67,36
@@ -289,9 +277,6 @@ Coordinates=166,272,47,58
 [GroupsListBox]
 Coordinates=804,832,139,212
 
-[TabItem6]
-Coordinates=458,212,69,36
-
 [ActionListBox]
 Coordinates=685,914,139,212
 
@@ -335,9 +320,6 @@ Coordinates=166,196,156,58
 [Label25]
 Coordinates=166,141,60,58
 
-[DesignTimeConnectRect]
-Coordinates=1031,163,157,36
-
 [EPSaveDialog]
 Coordinates=951,337,97,36
 
@@ -346,9 +328,6 @@ Coordinates=172,610,60,58
 
 [Label24]
 Coordinates=711,805,60,58
-
-[EndPointSavePathEdit]
-Coordinates=186,514,145,58
 
 [Label19]
 Coordinates=429,264,60,58
@@ -376,9 +355,6 @@ Coordinates=951,389,67,36
 
 [Rectangle12]
 Coordinates=951,441,87,36
-
-[Label29]
-Coordinates=652,805,60,58
 
 [Label28]
 Coordinates=339,266,60,58
@@ -542,9 +518,6 @@ Coordinates=1142,857,67,36
 
 [Layout24]
 Coordinates=1142,909,67,36
-
-[TabItem7]
-Coordinates=1142,961,69,36
 
 [GenServerRectBTN]
 Coordinates=1031,719,128,36
@@ -811,4 +784,13 @@ Coordinates=937,108,67,36
 
 [FDConnection]
 Coordinates=1031,53,97,36
+
+[CompleteTab]
+Coordinates=157,552,69,36
+
+[Step6Tab]
+Coordinates=1142,961,69,36
+
+[Step4Tab]
+Coordinates=458,212,69,36
 
