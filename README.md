@@ -11,6 +11,8 @@ AutoTables for RAD Server outputs a Delphi RAD Server project, a Delphi REST cli
 The OpenAPI 2.0 api spec file allows you to generate clients for your REST API in the following languages:
 ActionScript, Ada, Apex, Bash, C#, C++, Clojure, Dart, Elixir, Elm, Eiffel, Erlang, Go, Groovy, Haskell, Java, Kotlin, Lua, Node.js, Objective-C, Perl, PHP, PowerShell, Python, R, Ruby, Rust, Scala, Swift, Typescript
 
+![Alt text](Screenshots/openapi.jpg?raw=true "OpenAPI Generator")
+
 # Uses SwagDoc
 https://github.com/marcelojaloto/SwagDoc
 
@@ -19,3 +21,5 @@ https://github.com/ortuagustin/Delphi-Utils
 
 # Uses Swagger-UI
 https://github.com/swagger-api/swagger-ui
+
+
