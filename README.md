@@ -13,3 +13,9 @@ ActionScript, Ada, Apex, Bash, C#, C++, Clojure, Dart, Elixir, Elm, Eiffel, Erla
 
 # Uses SwagDoc
 https://github.com/marcelojaloto/SwagDoc
+
+# Uses Win.WebBrowser.pas
+https://github.com/ortuagustin/Delphi-Utils
+
+# Uses Swagger-UI
+https://github.com/swagger-api/swagger-ui
