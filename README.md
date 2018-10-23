@@ -6,12 +6,23 @@ Auto Tables is an automatic low code REST API generator for RAD Server. The serv
 A graphical Auto Tables for RAD Server Endpoint Editor is provided to help you set up, create, and edit your Auto Tables for RAD Server endpoints. Once you configure your endpoints you can either generate a new RAD Server project or you can save them out for loading into an existing Auto Tables for RAD Server ResourceModule. The configuration format is the standard FireDAC JSON.
 Full source code for the Auto Tables RAD Server ResourceModule is provided so you control your REST API server. This gives you the freedom to enhance and modify the source code as needed for your own solutions.
 
+# Endpoints
+![Alt text](Screenshots/endpoints.jpg?raw=true "Endpoints")
+
+# Endpoint Editor
+![Alt text](Screenshots/endpoint_editor.jpg?raw=true "Endpoint Editor")
+
 AutoTables for RAD Server outputs a Delphi RAD Server project, a Delphi REST client project suitable for LiveBindings, a Delphi REST SDK, an OpenAPI 2.0 api spec file, and a Swagger UI documentation interface.
 
 The OpenAPI 2.0 api spec file allows you to generate clients for your REST API in the following languages:
 ActionScript, Ada, Apex, Bash, C#, C++, Clojure, Dart, Elixir, Elm, Eiffel, Erlang, Go, Groovy, Haskell, Java, Kotlin, Lua, Node.js, Objective-C, Perl, PHP, PowerShell, Python, R, Ruby, Rust, Scala, Swift, Typescript
 
+# OpenAPI Generator
 ![Alt text](Screenshots/openapi.jpg?raw=true "OpenAPI Generator")
+
+# Documentation
+![Alt text](Screenshots/docs.jpg?raw=true "Documentation")
+
 
 # Uses SwagDoc
 https://github.com/marcelojaloto/SwagDoc
