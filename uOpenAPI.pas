@@ -267,7 +267,7 @@ begin
 
           vOperation.Responses.Add('default',vResponse);
 
-          vOperation.Tags.Add('TagName');
+          vOperation.Tags.Add(ADataSet.FieldByName('EndPoint').AsString);
 
           vPath.Operations.Add(vOperation);
           vSwagDoc.Paths.Add(vPath);
