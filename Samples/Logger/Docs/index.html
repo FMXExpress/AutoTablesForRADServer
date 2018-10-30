@@ -1,0 +1,289 @@
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
+    <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
+    <style>
+      html
+      {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+
+      *,
+      *:before,
+      *:after
+      {
+        box-sizing: inherit;
+      }
+
+      body
+      {
+        margin:0;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+
+    <script src="./swagger-ui-bundle.js"> </script>
+    <script src="./swagger-ui-standalone-preset.js"> </script>
+    <script>
+    window.onload = function() {
+
+      // Build a system
+      const ui = SwaggerUIBundle({
+        spec: {
+  "swagger":"2.0",
+  "info":
+  {
+    "version":"v1.0",
+    "title":"Auto Tables for RAD Server Sample",
+    "description":"Sample API for Auto Tables",
+    "termsOfService":"http://www.example.com/tos/",
+    "contact":
+    {
+      "name":"Sample Name",
+      "email":"sample@example.com",
+      "url":"http://www.example.com/contact/"
+    }
+,
+    "license":
+    {
+      "name":"Sample API License",
+      "url":"http://www.example.com/license/"
+    }
+  }
+,
+  "host":"example.com",
+  "basePath":"/v1",
+  "schemes":
+  [
+    "http",
+    "https"
+  ]
+,
+  "consumes":
+  [
+    "application/json"
+  ]
+,
+  "produces":
+  [
+    "application/xml",
+    "application/json",
+    "application/octet-stream",
+    "text/csv"
+  ]
+,
+  "paths":
+  {
+    "getlogger/":
+    {
+      "get":
+      {
+        "description":"Requests some data",
+        "operationId":"RequestData",
+        "tags":
+        [
+          "getlogger"
+        ]
+,
+        "parameters":
+        [
+                    {
+            "in":"header",
+            "name":"X-Embarcadero-Session-Token",
+            "description":"EMS User Authentication",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Id",
+            "description":"EMS Tenant Id",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Secret",
+            "description":"EMS Tenant Secret",
+            "required":false,
+            "type":"string"
+          }
+        ]
+,
+        "responses":
+        {
+          "200":
+          {
+            "description":"Successfully retrieved data"
+          }
+,
+          "default":
+          {
+            "description":"Error occured"
+          }
+        }
+      }
+    }
+,
+    "postlogger/":
+    {
+      "post":
+      {
+        "description":"Add or update some data",
+        "operationId":"AddOrUpdateData",
+        "tags":
+        [
+          "postlogger"
+        ]
+,
+        "parameters":
+        [
+                    {
+            "in":"header",
+            "name":"X-Embarcadero-Session-Token",
+            "description":"EMS User Authentication",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Id",
+            "description":"EMS Tenant Id",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Secret",
+            "description":"EMS Tenant Secret",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"body",
+            "name":"Body",
+            "description":"Post Body",
+            "required":false,
+            "type":"string"
+          }
+        ]
+,
+        "responses":
+        {
+          "200":
+          {
+            "description":"Successfully retrieved data"
+          }
+,
+          "default":
+          {
+            "description":"Error occured"
+          }
+        }
+      }
+    }
+,
+    "deletelogger/?ID={ID}":
+    {
+      "delete":
+      {
+        "description":"Delete some data",
+        "operationId":"DeleteData",
+        "tags":
+        [
+          "deletelogger"
+        ]
+,
+        "parameters":
+        [
+                    {
+            "in":"header",
+            "name":"X-Embarcadero-Session-Token",
+            "description":"EMS User Authentication",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Id",
+            "description":"EMS Tenant Id",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"header",
+            "name":"X-Embarcadero-Tenant-Secret",
+            "description":"EMS Tenant Secret",
+            "required":false,
+            "type":"string"
+          }
+,
+          
+          {
+            "in":"query",
+            "name":"ID",
+            "description":"A param called ID",
+            "required":true,
+            "type":"string"
+          }
+        ]
+,
+        "responses":
+        {
+          "200":
+          {
+            "description":"Successfully retrieved data"
+          }
+,
+          "default":
+          {
+            "description":"Error occured"
+          }
+        }
+      }
+    }
+  }
+}
+,
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout"
+      })
+
+      window.ui = ui
+    }
+  </script>
+  </body>
+</html>
