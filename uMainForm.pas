@@ -17,16 +17,17 @@ uses
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.FMXUI.Wait,
   IPPeerClient, REST.Backend.ServiceTypes, REST.Backend.MetaTypes, System.JSON,
   REST.Backend.EMSServices, REST.Backend.Providers, System.Threading,
-  REST.Backend.ServiceComponents, REST.Backend.EMSProvider,
+  REST.Backend.ServiceComponents, REST.Backend.EMSProvider,  StrUtils,
   Data.Bind.ObjectScope, REST.Backend.BindSource, FireDAC.DApt, FireDAC.Phys.IB,
   FireDAC.Phys.IBDef, FMX.ListView.Types, FMX.ListView.Appearances,
   FMX.ListView.Adapters.Base, FMX.ListView, REST.Backend.EMSApi,
-  FireDAC.Phys.IBBase, FireDAC.Comp.UI, FMX.ListBox, System.StrUtils,
+  FireDAC.Phys.IBBase, FireDAC.Comp.UI, FMX.ListBox,
   FMX.Platform, System.Zip, System.Actions, FMX.ActnList, FMX.Effects,
   FMX.Filter.Effects, FireDAC.Comp.ScriptCommands, FireDAC.Stan.Util,
   FireDAC.Comp.Script
   {$IFDEF MSWINDOWS}
-  , Windows, ShellAPI, Win.WebBrowser, FMX.WebBrowser
+  , Windows, ShellAPI, Win.WebBrowser, FMX.WebBrowser, uActivityFrame,
+  FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef
   {$ENDIF}
   ;
 
@@ -117,7 +118,6 @@ type
     DBDataBaseEdit: TEdit;
     FDPhysIBDriverLink1: TFDPhysIBDriverLink;
     FDGUIxWaitCursor1: TFDGUIxWaitCursor;
-    FDConnection: TFDConnection;
     Layout14: TLayout;
     Rectangle9: TRectangle;
     Text5: TText;
@@ -139,9 +139,9 @@ type
     RTListListBox: TListBox;
     TablesListBox: TListBox;
     GroupsListBox: TListBox;
-    Rectangle10: TRectangle;
+    GenAPIButtonRect: TRectangle;
     Text6: TText;
-    Rectangle11: TRectangle;
+    ResetAPIButtonRect: TRectangle;
     Text7: TText;
     EndPointLoadPathEdit: TEdit;
     Rectangle12: TRectangle;
@@ -320,6 +320,13 @@ type
     WBDocs: TWebBrowser;
     DesignTimeConnectRect: TRectangle;
     Label29: TLabel;
+    Activity: TActivityFrame;
+    GenAllTimer: TTimer;
+    Layout12: TLayout;
+    EmptyFormBTN: TSpeedButton;
+    GridFormBTN: TSpeedButton;
+    DashFormBTN: TSpeedButton;
+    FDConnection: TFDConnection;
     procedure RequestTypeEditClick(Sender: TObject);
     procedure TableNameEditClick(Sender: TObject);
     procedure GroupsEditClick(Sender: TObject);
@@ -331,8 +338,8 @@ type
     procedure ParamsEditClick(Sender: TObject);
     procedure TabControl1Change(Sender: TObject);
     procedure ActionEditClick(Sender: TObject);
-    procedure Rectangle10Click(Sender: TObject);
-    procedure Rectangle11Click(Sender: TObject);
+    procedure GenAPIButtonRectClick(Sender: TObject);
+    procedure ResetAPIButtonRectClick(Sender: TObject);
     procedure GenServerRectBTNClick(Sender: TObject);
     procedure CopyClientCompRectBTNClick(Sender: TObject);
     procedure GenClientRectBTNClick(Sender: TObject);
@@ -349,12 +356,15 @@ type
       const Row: Integer);
     procedure SampleDBRectBTNClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure GenAllTimerTimer(Sender: TObject);
   private
     { Private declarations }
     procedure UpdateSQLLabel;
     function GetCompTemplate(const CompTemplateStr, QueryString, ParamsContent: String; CompCount: Integer; ADataSet: TFDDataSet; AInfoDataSet: TFDDataSet): String;
     function GetMemTableTemplate(CompName: String; ADataSet: TFDDataSet; AQuery: TFDQuery; AOutDataSet: TFDMemTable): String;
     function ConnectionToDriverLink(AConnection: TFDConnection): String;
+    function ConnectionToInclude(AConnection: TFDConnection): String;
+    function GetUniqueIDFieldName(ATableName: String): String;
   public
     { Public declarations }
     procedure OpenDirectory(APath: String);
@@ -386,6 +396,12 @@ type
     ClientTemplateDPROJFile = 'AutoTablesClient.dproj';
     ClientTemplateMFFMXFile = 'uMainForm.fmx';
     ClientTemplateMFPASFile = 'uMainForm.pas';
+    ClientTemplateMFFMXAFile = 'uMainFormA.fmx';
+    ClientTemplateMFPASAFile = 'uMainFormA.pas';
+    ClientTemplateMFFMXBFile = 'uMainFormB.fmx';
+    ClientTemplateMFPASBFile = 'uMainFormB.pas';
+    ClientTemplateMFFMXCFile = 'uMainFormC.fmx';
+    ClientTemplateMFPASCFile = 'uMainFormC.pas';
 
     SDKTemplateFile = 'sdktemplatefile.pas';
     DelphiSDKPASFile = 'AutoTablesDelphiSDK.pas';
@@ -393,6 +409,15 @@ type
     EndpointFile = 'endpoints.json';
     BUSY = 1;
     NOT_BUSY = 0;
+
+    STAGE_0 = 0;
+    STAGE_1 = 1;
+    STAGE_2 = 2;
+    STAGE_3 = 3;
+    STAGE_4 = 4;
+    STAGE_5 = 5;
+    STAGE_6 = 6;
+    STAGE_BUSY = 99;
 
 var
   MainForm: TMainForm;
@@ -466,7 +491,7 @@ end;
 
 procedure TMainForm.ParamsEditClick(Sender: TObject);
 begin
-    if (SelectorForm<>nil) then
+{    if (SelectorForm<>nil) then
      begin
       SelectorForm.DisposeOf;
       SelectorForm := nil;
@@ -476,7 +501,7 @@ begin
     SelectorForm.SetParamsView;
     SelectorForm.Show;
     SelectorForm.SetDataSetResult('Params',BindSourceDBEndPoints);
-    MainForm.Hide;
+    MainForm.Hide; }
 end;
 
 procedure TMainForm.TableNameEditClick(Sender: TObject);
@@ -553,7 +578,7 @@ begin
     SL.StrictDelimiter := True;
     SL.Delimiter := '.';
     SL.DelimitedText := ATableName;
-    Result := SL[SL.Count-1].ToLower;
+    Result := SL[SL.Count-1].ToLower.Replace('`','_',[rfReplaceAll]);
   finally
     SL.Free;
   end;
@@ -642,7 +667,6 @@ ClientCompSL: TStringList;
 QueryString: String;
 ParamsContent: String;
 CompCount: Integer;
-MS: TMemoryStream;
 begin
   ClientMemo.Lines.Clear;
 
@@ -748,114 +772,159 @@ begin
     end;
 end;
 
-procedure TMainForm.Rectangle10Click(Sender: TObject);
-var
-I, II: Integer;
-GroupsList: TStringList;
-AAction, ARequestType, ADatabase: String;
+procedure TMainForm.GenAllTimerTimer(Sender: TObject);
 begin
-
-  ADatabase := FDConnection.DriverName;
-
-  GroupsList := TStringList.Create;
-  GroupsList.StrictDelimiter := True;
-  for I := 0 to GroupsListBox.Items.Count-1 do
-    begin
-      if GroupsListBox.ListItems[I].IsChecked = True then
-        begin
-          GroupsList.Append(GroupsListBox.Items[I]);
-        end;
-    end;
-
-  if ActionListBox.ItemIndex>=0 then
-    begin
-      AAction := ActionListBox.Items[ActionListBox.ItemIndex];
-    end
-   else
-    begin
-      AAction := 'Table';
-    end;
-  for I := 0 to TablesListBox.Items.Count-1 do
-    begin
-      if TablesListBox.ListItems[I].IsChecked = True then
-        begin
-
-          for II := 0 to RTListListBox.Items.Count-1 do
-            begin
-              if RTListListBox.ListItems[II].IsChecked = True then
-                begin
-                  ARequestType := RTListToRequestType(RTListListBox.Items[II]);
-                  BindSourceDBEndPoints.DataSet.Append;
-                  BindSourceDBEndPoints.DataSet.FieldByName('EndPoint').AsString := IfThen(EndPointNamesCB.IsChecked,ARequestType.ToLower,'')+TableNameToEndPoint(TablesListBox.Items[I]);
-                  BindSourceDBEndPoints.DataSet.FieldByName('RequestType').AsString := ARequestType;
-                  BindSourceDBEndPoints.DataSet.FieldByName('Action').AsString := AAction;
-                  if ARequestType='GET' then
-                    begin
-                      if AAction='Table' then
-                        BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
-                      if AAction='SQL' then
-                        begin
-                          if (ADatabase='IB') OR (ADatabase='FB') then
-                            BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' ROWS :PageId BY :Limit'
-                          else
-                          if ADatabase='MSSQL' then
-                            BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' OFFSET (CAST(:PageId AS integer)*CAST(:Limit AS integer))-CAST(:Limit AS integer) ROWS FETCH NEXT CAST(:Limit AS integer) ROWS ONLY'
-                          else
-                          if (ADatabase='MySQL') OR (ADatabase='PG') OR (ADatabase='SQLite') OR (ADatabase.Contains('CData')=True) then
-                            BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' LIMIT :PageId,:Limit'
-                          else
-                            BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I];
-                          BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'PageId,Limit';
-                        end;
-                      if AAction='AggregateSQL' then
-                        BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'query_count=SELECT COUNT(*) as query_count FROM ' + TablesListBox.Items[I];
-                      if AAction='Method' then
-                        BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
-                    end;
-                  if ARequestType='POST' then
-                    begin
-                      if ((AAction='Table') OR (AAction='SQL') OR (AAction='AggregateSQL')) then
-                        begin
-                          BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
-                          BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := 'ID';
-                        end;
-                      if AAction='Method' then
-                        BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
-                    end;
-                  if ARequestType='DELETE' then
-                    begin
-                      if ((AAction='Table') OR (AAction='AggregateSQL')) then
-                        begin
-                          BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
-                          BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'ID';
-                          BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := 'ID';
-                        end;
-                      if AAction='SQL' then
-                        begin
-                          BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'DELETE FROM ' + TablesListBox.Items[I] + 'WHERE ID=:ID';
-                          BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'ID';
-                          BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := 'ID';
-                        end;
-                      if AAction='Method' then
-                        begin
-                          BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
-                          BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'ID';
-                        end;
-                    end;
-                  BindSourceDBEndPoints.DataSet.FieldByName('Groups').AsString := GroupsList.CommaText;
-                  BindSourceDBEndPoints.DataSet.Post;
-                end;
-            end;
-        end;
-
-    end;
-
-  GroupsList.Free;
-
-  TabControl1.ActiveTab := TabItem4;
+  case GenAllTimer.Tag of
+    STAGE_1: begin GenServerRectBTNClick(Sender); end;
+    STAGE_2: begin GenAllTimer.Tag := STAGE_3; end;
+    STAGE_3: begin GenClientRectBTNClick(Sender); end;
+    STAGE_4: begin GenAllTimer.Tag := STAGE_5; end;
+    STAGE_5: begin GenOpenAPIRectBTNClick(Sender); end;
+    STAGE_6: begin GenAllTimer.Tag := STAGE_0; GenAllTimer.Enabled := False; end;
+  end;
 end;
 
-procedure TMainForm.Rectangle11Click(Sender: TObject);
+function TMainForm.GetUniqueIDFieldName(ATableName: String): String;
+var
+SL: TStringList;
+begin
+  SL := TStringList.Create;
+  FDConnection.GetKeyFieldNames('','',ATableName, '', SL);
+
+  if SL.Text<>'' then
+  	Result := SL[0];
+  SL.Free;
+end;
+
+procedure TMainForm.GenAPIButtonRectClick(Sender: TObject);
+begin
+  TTask.Create(procedure var
+    I, II: Integer;
+    GroupsList: TStringList;
+    AAction, ARequestType, ADatabase, AUniqueIdField: String;
+   begin
+    TThread.Synchronize(nil,procedure begin
+      Activity.Start;
+    end);
+    ADatabase := FDConnection.DriverName;
+
+    GroupsList := TStringList.Create;
+    GroupsList.StrictDelimiter := True;
+    for I := 0 to GroupsListBox.Items.Count-1 do
+      begin
+        if GroupsListBox.ListItems[I].IsChecked = True then
+          begin
+            GroupsList.Append(GroupsListBox.Items[I]);
+          end;
+      end;
+
+    if ActionListBox.ItemIndex>=0 then
+      begin
+        AAction := ActionListBox.Items[ActionListBox.ItemIndex];
+      end
+     else
+      begin
+        AAction := 'Table';
+      end;
+    for I := 0 to TablesListBox.Items.Count-1 do
+      begin
+        if TablesListBox.ListItems[I].IsChecked = True then
+          begin
+            BindSourceDBEndPoints.DataSet.DisableControls;
+            for II := 0 to RTListListBox.Items.Count-1 do
+              begin
+                if RTListListBox.ListItems[II].IsChecked = True then
+                  begin
+                    ARequestType := RTListToRequestType(RTListListBox.Items[II]);
+
+                    AUniqueIdField := '';
+
+                    BindSourceDBEndPoints.DataSet.Append;
+                    BindSourceDBEndPoints.DataSet.FieldByName('EndPoint').AsString := IfThen(EndPointNamesCB.IsChecked,ARequestType.ToLower,'')+TableNameToEndPoint(TablesListBox.Items[I]);
+                    BindSourceDBEndPoints.DataSet.FieldByName('RequestType').AsString := ARequestType;
+                    BindSourceDBEndPoints.DataSet.FieldByName('Action').AsString := AAction;
+                    if ARequestType='GET' then
+                      begin
+                        if AAction='Table' then
+                          BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
+                        if AAction='SQL' then
+                          begin
+                            if (ADatabase='IB') OR (ADatabase='FB') then
+                              BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' ROWS :PageId BY :Limit'
+                            else
+                            if ADatabase='MSSQL' then
+                              BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' OFFSET (CAST(:PageId AS integer)*CAST(:Limit AS integer))-CAST(:Limit AS integer) ROWS FETCH NEXT CAST(:Limit AS integer) ROWS ONLY'
+                            else
+                            if (ADatabase='MySQL') OR (ADatabase='PG') OR (ADatabase='SQLite') OR (ADatabase.Contains('CData')=True) then
+                              BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I] + ' LIMIT :PageId,:Limit'
+                            else
+                              BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'SELECT * FROM ' + TablesListBox.Items[I];
+                            BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'PageId,Limit';
+                          end;
+                        if AAction='AggregateSQL' then
+                          BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'query_count=SELECT COUNT(*) as query_count FROM ' + TablesListBox.Items[I];
+                        if AAction='Method' then
+                          BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
+                      end;
+                    if ARequestType='POST' then
+                      begin
+                        if ((AAction='Table') OR (AAction='SQL') OR (AAction='AggregateSQL')) then
+                          begin
+                            AUniqueIdField := GetUniqueIdFieldName(TablesListBox.Items[I]);
+                            BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
+                            BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := AUniqueIdField;
+                          end;
+                        if AAction='Method' then
+                          BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
+                      end;
+                    if ARequestType='DELETE' then
+                      begin
+                        if ((AAction='Table') OR (AAction='AggregateSQL')) then
+                          begin
+                            AUniqueIdField := GetUniqueIdFieldName(TablesListBox.Items[I]);
+                            BindSourceDBEndPoints.DataSet.FieldByName('TableName').AsString := TablesListBox.Items[I];
+                            BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := AUniqueIdField;
+                            BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := AUniqueIdField;
+                          end;
+                        if AAction='SQL' then
+                          begin
+                            AUniqueIdField := GetUniqueIdFieldName(TablesListBox.Items[I]);
+                            BindSourceDBEndPoints.DataSet.FieldByName('SQL').AsString := 'DELETE FROM ' + TablesListBox.Items[I] + 'WHERE '+AUniqueIdField+'=:'+AUniqueIdField;
+                            BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := AUniqueIdField;
+                            BindSourceDBEndPoints.DataSet.FieldByName('UniqueId').AsString := AUniqueIdField;
+                          end;
+                        if AAction='Method' then
+                          begin
+                            BindSourceDBEndPoints.DataSet.FieldByName('Method').AsString := 'get' + TablesListBox.Items[I];
+                            BindSourceDBEndPoints.DataSet.FieldByName('Params').AsString := 'ID';
+                          end;
+                      end;
+                    BindSourceDBEndPoints.DataSet.FieldByName('Groups').AsString := GroupsList.CommaText;
+                    if (ARequestType<>'GET') AND (AAction<>'Method') AND (AUniqueIdField='') then
+                      BindSourceDBEndPoints.DataSet.Cancel
+                    else
+                      BindSourceDBEndPoints.DataSet.Post;
+                  end;
+              end;
+            BindSourceDBEndPoints.DataSet.EnableControls;
+          end;
+
+      end;
+
+    GroupsList.Free;
+
+    TThread.Synchronize(nil,procedure begin
+      LinkGridToDataSourceBindSourceDB1.Active := False;
+      LinkGridToDataSourceBindSourceDB1.Active := True;
+
+      Activity.Stop;
+
+      TabControl1.ActiveTab := TabItem4;
+    end);
+   end).Start;
+end;
+
+procedure TMainForm.ResetAPIButtonRectClick(Sender: TObject);
 begin
 EndPointTable.EmptyDataSet;
 LinkGridToDataSourceBindSourceDB1.Active := False;
@@ -863,68 +932,86 @@ LinkGridToDataSourceBindSourceDB1.Active := True;
 end;
 
 procedure TMainForm.GetTablesRectBTNClick(Sender: TObject);
-var
-SL: TStringList;
-I: Integer;
-TablesCount: Integer;
 begin
-  if LoadIBDBCB.IsChecked=True then
-    begin
-      FDConnection.Params.Values['Database'] := DBDataBaseEdit.Text;
-      FDConnection.Params.Values['User_Name'] := DBUsernameEdit.Text;
-      FDConnection.Params.Values['Password'] := DBPasswordEdit.Text;
-      FDConnection.Params.Values['OpenMode'] := 'OpenOrCreate';
-      //FDConnectionIB.Params.Values['SEPpassword'] := 'password';
+  TTask.Create(procedure
+    var
+    SL: TStringList;
+    I: Integer;
+    TablesCount: Integer;
+  begin
+    TThread.Synchronize(nil,procedure begin
+      Activity.Start;
+    end);
+    try
+    if LoadIBDBCB.IsChecked=True then
+      begin
+        FDConnection.Params.Values['Database'] := DBDataBaseEdit.Text;
+        FDConnection.Params.Values['User_Name'] := DBUsernameEdit.Text;
+        FDConnection.Params.Values['Password'] := DBPasswordEdit.Text;
+        FDConnection.Params.Values['OpenMode'] := 'OpenOrCreate';
+        //FDConnectionIB.Params.Values['SEPpassword'] := 'password';
+      end;
+    FDConnection.Open;
+
+    SL := TStringList.Create;
+    FDConnection.GetTableNames('', '', '', SL);
+    BindSourceDBTables.DataSet.DisableControls;
+    for I := 0 to SL.Count-1 do
+      begin
+        BindSourceDBTables.DataSet.AppendRecord([SL[I]]);
+      end;
+    BindSourceDBTables.DataSet.EnableControls;
+    TablesCount := SL.Count;
+    SL.Free;
+
+    TThread.Synchronize(nil,procedure begin
+      LinkFillControlToField1.Active := False;
+      LinkFillControlToField1.Active := True;
+
+      LinkFillControlToField3.Active := False;
+      LinkFillControlToField3.Active := True;
+
+      LinkFillControlToField4.Active := False;
+      LinkFillControlToField4.Active := True;
+    end);
+
+    for I := 0 to RTListListBox.Items.Count-1 do
+      begin
+        RTListListBox.ListItems[I].IsChecked := True;
+      end;
+
+    for I := 0 to TablesListBox.Items.Count-1 do
+      begin
+        TablesListBox.ListItems[I].IsChecked := True;
+      end;
+
+    for I := 0 to GroupsListBox.Items.Count-1 do
+      begin
+        GroupsListBox.ListItems[I].IsChecked := True;
+      end;
+
+    except
+     on E: Exception do
+       TThread.Synchronize(nil,procedure begin ShowMessage(E.Message); end);
     end;
-  FDConnection.Open;
 
-  SL := TStringList.Create;
-  FDConnection.GetTableNames('', '', '', SL);
-  for I := 0 to SL.Count-1 do
-    begin
-      BindSourceDBTables.DataSet.AppendRecord([SL[I]]);
-    end;
-  TablesCount := SL.Count;
-  SL.Free;
-
-  LinkFillControlToField1.Active := False;
-  LinkFillControlToField1.Active := True;
-
-  LinkFillControlToField3.Active := False;
-  LinkFillControlToField3.Active := True;
-
-  LinkFillControlToField4.Active := False;
-  LinkFillControlToField4.Active := True;
-
-  for I := 0 to RTListListBox.Items.Count-1 do
-    begin
-      RTListListBox.ListItems[I].IsChecked := True;
-    end;
-
-  for I := 0 to TablesListBox.Items.Count-1 do
-    begin
-      TablesListBox.ListItems[I].IsChecked := True;
-    end;
-
-  for I := 0 to GroupsListBox.Items.Count-1 do
-    begin
-      GroupsListBox.ListItems[I].IsChecked := True;
-    end;
-
-  if TablesCount>0 then
-    TabControl1.ActiveTab := Step4Tab;
+    TThread.Synchronize(nil,procedure begin
+      Activity.Stop;
+      if TablesCount>0 then TabControl1.ActiveTab := Step4Tab;
+    end);
+  end).Start;
 end;
 
 procedure TMainForm.GetGroupsRectBTNClick(Sender: TObject);
 begin
+
   EMSProvider.URLHost := HostEdit.Text;
   EMSProvider.URLPort := PortEdit.Text.ToInteger;
   EMSProvider.TenantId := TenantIdEdit.Text;
   EMSProvider.TenantSecret := TenantSecretEdit.Text;
   GetGroups;
 
-  if GroupsListView.Items.Count>0 then
-    TabControl1.ActiveTab := TabItem3;
+  if GroupsListView.Items.Count>0 then TabControl1.ActiveTab := TabItem3;
 end;
 
 procedure TMainForm.Rectangle8Click(Sender: TObject);
@@ -1040,12 +1127,24 @@ procedure TMainForm.GenClientRectBTNClick(Sender: TObject);
 var
 AOutputPath: String;
 begin
-  GenerateDelphiClientAction.Execute;
-  GenerateDelphiClientSDKAction.Execute;
+  TTask.Create(procedure begin
+    if GenAllTimer.Tag = STAGE_3 then GenAllTimer.Tag := STAGE_BUSY;
+    TThread.Synchronize(nil,procedure begin
+        Activity.Start;
+    end);
 
-  AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
+    GenerateDelphiClientAction.Execute;
+    GenerateDelphiClientSDKAction.Execute;
 
-  OpenDirectory(AOutputPath);
+    AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
+
+    OpenDirectory(AOutputPath);
+
+    TThread.Synchronize(nil,procedure begin
+      Activity.Stop;
+    end);
+    if GenAllTimer.Tag = STAGE_BUSY then GenAllTimer.Tag := STAGE_4;
+  end).Start;
 end;
 
 procedure TMainForm.GenerateDelphiClientActionExecute(Sender: TObject);
@@ -1057,24 +1156,46 @@ var
   CompCount: Integer;
   CompList, CompHeaderList: TStringList;
   HeaderList, FunctionList: TStringList;
+  MenuList: TStringList;
+  TableName, GetComp, PostComp, DeleteComp, GetMemComp, PostMemComp, UniqueColName: String;
   ATemplatePath: String;
   AOutputPath: String;
   MS: TMemoryStream;
+  ClientTemplateMFFMXFile_Str, ClientTemplateMFPASFile_Str: String;
 begin
-  ClientMemo.Lines.Text := ComponentToStringProc(EndPointTable);
+  TThread.Synchronize(nil,procedure begin
+    ClientMemo.Lines.Text := ComponentToStringProc(EndPointTable);
+  end);
 
     CompCount := 1;
+    EndPointTable.DisableControls;
     EndPointTable.First;
     CompList := TStringList.Create;
     CompHeaderList := TStringList.Create;
     HeaderList := TStringList.Create;
     FunctionList := TStringList.Create;
+    MenuList := TStringList.Create;
     SL := TStringList.Create;
     SL.StrictDelimiter := True;
     while not EndPointTable.EOF do
       begin
         QueryString := '';
         ParamsContent := '';
+
+        if (EndPointTable.FieldByName('RequestType').AsString='GET') AND (TableName<>'') then
+          MenuList.Append('  MenuMT.AppendRecord(['''+TableName+''','''+GetComp+''','''+PostComp+''','''+DeleteComp+''','''+GetMemComp+''','''+PostMemComp+''','''+UniqueColName+''']);');
+
+        if EndPointTable.FieldByName('RequestType').AsString='GET' then
+          begin
+            TableName := EndPointTable.FieldByName('TableName').AsString;
+            GetComp := '';
+            PostComp := '';
+            DeleteComp := '';
+            GetMemComp := '';
+            PostMemComp := '';
+            UniqueColName := '';
+          end;
+
         SL.Clear;
         if EndPointTable.FieldByName('RequestType').AsString='GET' then
           begin
@@ -1119,10 +1240,10 @@ begin
             CompHeaderList.Append('    '+EndPointTable.FieldByName('EndPoint').AsString+'PostMemTable'+CompCount.ToString+': TFDMemTable;');
           end;
 
-        HeaderList.Append('    procedure '+EndPointTable.FieldByName('EndPoint').AsString+'Execute;');
+        HeaderList.Append('    procedure '+EndPointTable.FieldByName('EndPoint').AsString+'Execute' + IfThen(EndPointTable.FieldByName('RequestType').AsString='DELETE','(const ID: String)','') + ';');
 
         FunctionList.Append('');
-        FunctionList.Append('procedure TAutoTablesClientDM.'+EndPointTable.FieldByName('EndPoint').AsString+'Execute;');
+        FunctionList.Append('procedure TAutoTablesClientDM.'+EndPointTable.FieldByName('EndPoint').AsString+'Execute' + IfThen(EndPointTable.FieldByName('RequestType').AsString='DELETE','(const ID: String)','') + ';');
         if (EndPointTable.FieldByName('RequestType').AsString<>'DELETE') then
           begin
             FunctionList.Append('var');
@@ -1138,8 +1259,14 @@ begin
             FunctionList.Append('  SS := TStringStream.Create('''',TEncoding.UTF8);');
             FunctionList.Append('  '+EndPointTable.FieldByName('EndPoint').AsString+'PostMemTable'+CompCount.ToString+'.SaveToStream(SS,sfJSON);');
             FunctionList.Append('  SS.Position := 0;');
+            FunctionList.Append('  BackendEndpoint'+CompCount.ToString+'.ClearBody;');
             FunctionList.Append('  BackendEndpoint'+CompCount.ToString+'.AddBody(SS.DataString, TRESTContentType.ctAPPLICATION_JSON);');
             FunctionList.Append('  SS.Free;');
+          end;
+
+        if (EndPointTable.FieldByName('RequestType').AsString='DELETE') then
+          begin
+            FunctionList.Append('  BackendEndpoint'+CompCount.ToString+'.Params.ParameterByName(''' + EndPointTable.FieldByName('UniqueID').AsString + ''').Value := ID;');
           end;
         FunctionList.Append('  BackendEndpoint'+CompCount.ToString+'.Execute;');
         if (EndPointTable.FieldByName('RequestType').AsString<>'DELETE') then
@@ -1153,10 +1280,35 @@ begin
           end;
         FunctionList.Append('end;');
 
+        if TableName<>'' then
+          begin
+            if EndPointTable.FieldByName('RequestType').AsString='GET' then
+              begin
+                GetComp := EndPointTable.FieldByName('EndPoint').AsString+'Execute';
+                GetMemComp := EndPointTable.FieldByName('EndPoint').AsString+'MemTable'+CompCount.ToString;
+              end;
+            if EndPointTable.FieldByName('RequestType').AsString='POST' then
+              begin
+                PostComp := EndPointTable.FieldByName('EndPoint').AsString+'Execute';
+                PostMemComp := EndPointTable.FieldByName('EndPoint').AsString+'PostMemTable'+CompCount.ToString;
+              end;
+            if EndPointTable.FieldByName('RequestType').AsString='DELETE' then
+              begin
+                DeleteComp := EndPointTable.FieldByName('EndPoint').AsString+'Execute';
+                UniqueColName := EndPointTable.FieldByName('UniqueID').AsString;
+              end;
+          end;
+
         EndPointTable.Next;
         Inc(CompCount);
       end;
+
+    if TableName<>'' then
+      MenuList.Append('  MenuMT.AppendRecord(['''+TableName+''','''+GetComp+''','''+PostComp+''','''+DeleteComp+''','''+GetMemComp+''','''+PostMemComp+''','''+UniqueColName+''']);');
+
     SL.Free;
+    EndPointTable.EnableControls;
+
   CompHeaderList.Append('    BackendAuth1: TBackendAuth;');
   CompHeaderList.Append('    EMSProvider1: TEMSProvider;');
 
@@ -1191,17 +1343,36 @@ begin
       TFile.Copy(TPath.Combine(ATemplatePath,ClientTemplateDPROJFile),TPath.Combine(AOutputPath,ClientTemplateDPROJFile),True);
     end;
 
-  if TFile.Exists(TPath.Combine(ATemplatePath,ClientTemplateMFFMXFile))=True then
+  if EmptyFormBTN.IsPressed then
     begin
-      TFile.Copy(TPath.Combine(ATemplatePath,ClientTemplateMFFMXFile),TPath.Combine(AOutputPath,ClientTemplateMFFMXFile),True);
+      ClientTemplateMFFMXFile_Str := ClientTemplateMFFMXAFile;
+      ClientTemplateMFPASFile_Str := ClientTemplateMFPASAFile;
+    end;
+  if GridFormBTN.IsPressed then
+    begin
+      ClientTemplateMFFMXFile_Str := ClientTemplateMFFMXBFile;
+      ClientTemplateMFPASFile_Str := ClientTemplateMFPASBFile;
+    end;
+  if DashFormBTN.IsPressed then
+    begin
+      ClientTemplateMFFMXFile_Str := ClientTemplateMFFMXCFile;
+      ClientTemplateMFPASFile_Str := ClientTemplateMFPASCFile;
     end;
 
-  if TFile.Exists(TPath.Combine(ATemplatePath,ClientTemplateMFPASFile))=True then
+  if TFile.Exists(TPath.Combine(ATemplatePath,ClientTemplateMFFMXFile_Str))=True then
     begin
-      TFile.Copy(TPath.Combine(ATemplatePath,ClientTemplateMFPASFile),TPath.Combine(AOutputPath,ClientTemplateMFPASFile),True);
+      TFile.Copy(TPath.Combine(ATemplatePath,ClientTemplateMFFMXFile_Str),TPath.Combine(AOutputPath,ClientTemplateMFFMXFile),True);
+    end;
+
+  if TFile.Exists(TPath.Combine(ATemplatePath,ClientTemplateMFPASFile_Str))=True then
+    begin
+      SL.LoadFromFile(TPath.Combine(ATemplatePath,ClientTemplateMFPASFile_Str));
+      SL.Text := SL.Text.Replace('{#MenuList#}'+#13#10,MenuList.Text);
+      SL.SaveToFile(TPath.Combine(AOutputPath,ClientTemplateMFPASFile));
     end;
 
   SL.Free;
+  MenuList.Free;
   FunctionList.Free;
   HeaderList.Free;
   CompList.Free;
@@ -1219,11 +1390,14 @@ AGenerator: TDelphiSDKFrame;
   ATemplatePath: String;
   AOutputPath: String;}
 begin
-  AGenerator := TDelphiSDKFrame.Create(Self);
-  AGenerator.Initialize(HostEdit.Text,PortEdit.Text,EndPointTable,FDMemTableInfo);
-  AGenerator.GenerateSDK(DelphiSDKPASFile);
-  AGenerator.Free;
-
+  TTask.Create(procedure begin
+    TThread.Synchronize(nil,procedure begin
+      AGenerator := TDelphiSDKFrame.Create(Self);
+      AGenerator.Initialize(HostEdit.Text,PortEdit.Text,EndPointTable,FDMemTableInfo);
+      AGenerator.GenerateSDK(DelphiSDKPASFile);
+      AGenerator.Free;
+    end);
+  end).Start;
 
 {    CompCount := 1;
     EndPointTable.First;
@@ -1345,46 +1519,66 @@ ADocsArchive: String;
 ADocsPath: String;
 DocsFile: TStringList;
 begin
-  AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
-  if TDirectory.Exists(AOutputPath)=False then
-    begin
-      TDirectory.CreateDirectory(AOutputPath);
+  TTask.Create(procedure begin
+    if GenAllTimer.Tag = STAGE_5 then GenAllTimer.Tag := STAGE_BUSY;
+    TThread.Synchronize(nil,procedure begin
+      Activity.Start;
+    end);
+    try
+    AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
+    if TDirectory.Exists(AOutputPath)=False then
+      begin
+        TDirectory.CreateDirectory(AOutputPath);
+      end;
+
+    SL := TStringList.Create;
+    SL.Text := OpenAPIDM.CreateDoc(EndPointTable,FDMemTableInfo);
+    SL.SaveToFile(TPath.Combine(AOutputPath,OpenAPIDocsFile));
+    TThread.Synchronize(nil,procedure begin
+      OpenAPIMemo.Lines.Text := SL.Text;
+    end);
+
+    ADocsArchive := TPath.Combine(TemplatePath,SwaggerUIZip);
+    ADocsPath := TPath.Combine(AOutputPath,DocsPath);
+
+    if TDirectory.Exists(ADocsPath)=False then
+      begin
+        TDirectory.CreateDirectory(ADocsPath);
+      end;
+
+    if TFile.Exists(ADocsArchive) then
+      begin
+        TZipFile.ExtractZipFile(ADocsArchive,ADocsPath);
+      end;
+
+    SL.SaveToFile(TPath.Combine(ADocsPath,OpenAPIDocsFile));
+
+    DocsFile := TStringList.Create;
+    DocsFile.LoadFromFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
+    DocsFile.Text := DocsFile.Text.Replace('''#apispec.json#''',SL.Text);
+    DocsFile.SaveToFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
+    DocsFile.Free;
+
+    SL.Free;
+    except
+     on E: Exception do
+      TThread.Synchronize(nil, procedure begin ShowMessage(E.Message); end);
     end;
 
-  SL := TStringList.Create;
-  SL.Text := OpenAPIDM.CreateDoc(EndPointTable,FDMemTableInfo);
-  SL.SaveToFile(TPath.Combine(AOutputPath,OpenAPIDocsFile));
-  OpenAPIMemo.Lines.Text := SL.Text;
+    TThread.Synchronize(nil,procedure begin
+      OpenDirectory(AOutputPath);
 
-  ADocsArchive := TPath.Combine(TemplatePath,SwaggerUIZip);
-  ADocsPath := TPath.Combine(AOutputPath,DocsPath);
+      Activity.Stop;
+      Application.ProcessMessages;
 
-  if TDirectory.Exists(ADocsPath)=False then
-    begin
-      TDirectory.CreateDirectory(ADocsPath);
-    end;
+      TabControl1.ActiveTab := CompleteTab;
+      OutputTabControl.ActiveTab := DocsTab;
 
-  if TFile.Exists(ADocsArchive) then
-    begin
-      TZipFile.ExtractZipFile(ADocsArchive,ADocsPath);
-    end;
+      WBDocs.URL := TPath.Combine(ADocsPath,SwaggerIndexFile);
+    end);
+    if GenAllTimer.Tag = STAGE_BUSY then GenAllTimer.Tag := STAGE_6;
+  end).Start;
 
-  SL.SaveToFile(TPath.Combine(ADocsPath,OpenAPIDocsFile));
-
-  DocsFile := TStringList.Create;
-  DocsFile.LoadFromFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
-  DocsFile.Text := DocsFile.Text.Replace('''#apispec.json#''',SL.Text);
-  DocsFile.SaveToFile(TPath.Combine(ADocsPath,SwaggerIndexFile));
-  DocsFile.Free;
-
-  SL.Free;
-
-  OpenDirectory(AOutputPath);
-
-  TabControl1.ActiveTab := CompleteTab;
-  OutputTabControl.ActiveTab := DocsTab;
-
-  WBDocs.URL := TPath.Combine(ADocsPath,SwaggerIndexFile);
 end;
 
 function TMainForm.GetQueryStringList(ADataSet: TFDDataSet): String;
@@ -1458,95 +1652,156 @@ begin
   Result := PhysDriverLinkStr;
 end;
 
-procedure TMainForm.GenServerRectBTNClick(Sender: TObject);
+function TMainForm.ConnectionToInclude(AConnection: TFDConnection): String;
 var
-  I: Integer;
-  SL: TStringList;
-  EndPointTableStr: String;
-  MethodList, MethodHeaderList: TStringList;
-  ATemplatePath: String;
-  AOutputPath: String;
+PhysIncludeStr: String;
 begin
-  ServerMemo.Lines.Text := ComponentToStringProc(EndPointTable) + ComponentToStringProc(FDConnection);
+  if AConnection.DriverName='ADS' then
+    PhysIncludeStr := 'FireDAC.Phys.ADS'
+  else if AConnection.DriverName='ASA' then
+    PhysIncludeStr := 'FireDAC.Phys.ASA'
+  else if AConnection.DriverName='CDataREST' then
+    PhysIncludeStr := 'FireDAC.Phys.CDataREST'
+  else if AConnection.DriverName='CDataRSS' then
+    PhysIncludeStr := 'FireDAC.Phys.CDataRSS'
+  else if AConnection.DriverName='CDataSalesforce' then
+    PhysIncludeStr := 'FireDAC.Phys.CDataSalesforce'
+  else if AConnection.DriverName='DB2' then
+    PhysIncludeStr := 'FireDAC.Phys.DB2'
+  else if AConnection.DriverName='DS' then
+    PhysIncludeStr := 'FireDAC.Phys.DS'
+  else if AConnection.DriverName='FB' then
+    PhysIncludeStr := 'FireDAC.Phys.FB'
+  else if AConnection.DriverName='IB' then
+    PhysIncludeStr := 'FireDAC.Phys.IB'
+  else if AConnection.DriverName='IBLite' then
+    PhysIncludeStr := 'FireDAC.Phys.IBLite'
+  else if AConnection.DriverName='Infx' then
+    PhysIncludeStr := 'FireDAC.Phys.Infx'
+  else if AConnection.DriverName='Mongo' then
+    PhysIncludeStr := 'FireDAC.Phys.Mongo'
+  else if AConnection.DriverName='MSAccess' then
+    PhysIncludeStr := 'FireDAC.Phys.MSAccess'
+  else if AConnection.DriverName='MSSQL' then
+    PhysIncludeStr := 'FireDAC.Phys.MSSQL'
+  else if AConnection.DriverName='MySQL' then
+    PhysIncludeStr := 'FireDAC.Phys.MySQL'
+  else if AConnection.DriverName='ODBC' then
+    PhysIncludeStr := 'FireDAC.Phys.ODBC'
+  else if AConnection.DriverName='Oracle' then
+    PhysIncludeStr := 'FireDAC.Phys.Oracle'
+  else if AConnection.DriverName='PG' then
+    PhysIncludeStr := 'FireDAC.Phys.PG'
+  else if AConnection.DriverName='SQLite' then
+    PhysIncludeStr := 'FireDAC.Phys.SQLite'
+  else if AConnection.DriverName='TData' then
+    PhysIncludeStr := 'FireDAC.Phys.TData'
+  else if AConnection.DriverName='TDBX' then
+    PhysIncludeStr := 'FireDAC.Phys.TDBX';
+  Result := PhysIncludeStr;
+end;
 
-  SL := TStringList.Create;
-  SL.StrictDelimiter := True;
-  EndPointTable.First;
-  MethodHeaderList := TStringList.Create;
-  MethodList := TStringList.Create;
-  MethodList.Append('');
-  while not EndPointTable.EOF do
-    begin
-      SL.Clear;
-      if EndPointTable.FieldByName('Method').AsString<>'' then
-        begin
-         SL.CommaText := GetQueryStringList(EndPointTable);
+procedure TMainForm.GenServerRectBTNClick(Sender: TObject);
+begin
+  TTask.Create(procedure
+    var
+      I: Integer;
+      SL: TStringList;
+      EndPointTableStr: String;
+      MethodList, MethodHeaderList: TStringList;
+      ATemplatePath: String;
+      AOutputPath: String;
+  begin
+    if GenAllTimer.Tag = STAGE_1 then GenAllTimer.Tag := STAGE_BUSY;
+    TThread.Synchronize(nil, procedure begin
+      Activity.Start;
+      ServerMemo.Lines.Text := ComponentToStringProc(EndPointTable) + ComponentToStringProc(FDConnection);
+    end);
 
-         MethodHeaderList.Insert(0,'    function '+EndPointTable.FieldByName('Method').AsString+'(AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream;');
+    EndPointTable.DisableControls;
+    SL := TStringList.Create;
+    SL.StrictDelimiter := True;
+    EndPointTable.First;
+    MethodHeaderList := TStringList.Create;
+    MethodList := TStringList.Create;
+    MethodList.Append('');
 
-         MethodList.Append('function TAutoTablesResource.'+EndPointTable.FieldByName('Method').AsString+'(AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream;');
-         if SL.Count>0 then
+    while not EndPointTable.EOF do
+      begin
+        SL.Clear;
+        if EndPointTable.FieldByName('Method').AsString<>'' then
           begin
-            MethodList.Append('var');
-            for I := 0 to SL.Count-1 do
-              begin
-                MethodList.Append('A'+SL[I]+': String');
-              end;
+           SL.CommaText := GetQueryStringList(EndPointTable);
+
+           MethodHeaderList.Insert(0,'    function '+EndPointTable.FieldByName('Method').AsString+'(AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream;');
+
+           MethodList.Append('function TAutoTablesResource.'+EndPointTable.FieldByName('Method').AsString+'(AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream;');
+           if SL.Count>0 then
+            begin
+              MethodList.Append('var');
+              for I := 0 to SL.Count-1 do
+                begin
+                  MethodList.Append('A'+SL[I]+': String');
+                end;
+            end;
+           MethodList.Append('begin');
+           for I := 0 to SL.Count-1 do
+             begin
+               MethodList.Append('ARequest.Params.TryGetValue('+SL[I]+',A'+SL[I]+');');
+             end;
+           MethodList.Append('');
+           MethodList.Append('end;');
+           MethodList.Append('');
           end;
-         MethodList.Append('begin');
-         for I := 0 to SL.Count-1 do
-           begin
-             MethodList.Append('ARequest.Params.TryGetValue('+SL[I]+',A'+SL[I]+');');
-           end;
-         MethodList.Append('');
-         MethodList.Append('end;');
-         MethodList.Append('');
-        end;
 
-      EndPointTable.Next;
-    end;
-  SL.Free;
+        EndPointTable.Next;
+      end;
+    EndPointTable.EnableControls;
+    SL.Free;
 
-  ATemplatePath := TPath.Combine(TPath.Combine(TPath.Combine(ExtractFilePath(ParamStr(0)),TemplatePath),ServerPath),OPLangPath);
-  AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
-  if TDirectory.Exists(AOutputPath)=False then
-    begin
-      TDirectory.CreateDirectory(AOutputPath);
-    end;
+    ATemplatePath := TPath.Combine(TPath.Combine(TPath.Combine(ExtractFilePath(ParamStr(0)),TemplatePath),ServerPath),OPLangPath);
+    AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
+    if TDirectory.Exists(AOutputPath)=False then
+      begin
+        TDirectory.CreateDirectory(AOutputPath);
+      end;
 
-  SL := TStringList.Create;
-  SL.LoadFromFile(TPath.Combine(ATemplatePath,ServerTemplateDFMFile));
-  EndPointTableStr := ComponentToStringProc(EndPointTable);
-  while GetObjectStr(EndPointTableStr, '  object', '  end'+#13#10)<>'' do
-    EndPointTableStr := EndPointTableStr.Replace(GetObjectStr(EndPointTableStr, '  object', '  end'+#13#10),'');
-  SL.Text := SL.Text.Replace('{#EndPointComponent#}',EndPointTableStr);
-  SL.Text := SL.Text.Replace('{#EndPointConnection#}',ComponentToStringProc(FDConnection));
-  SL.Text := SL.Text.Replace('FDPhysIBDriverLink1: TFDPhysIBDriverLink',ConnectionToDriverLink(FDConnection));
-  SL.SaveToFile(TPath.Combine(AOutputPath,ServerTemplateDFMFile));
+    SL := TStringList.Create;
+    SL.LoadFromFile(TPath.Combine(ATemplatePath,ServerTemplateDFMFile));
+    EndPointTableStr := ComponentToStringProc(EndPointTable);
+    while GetObjectStr(EndPointTableStr, '  object', '  end'+#13#10)<>'' do
+      EndPointTableStr := EndPointTableStr.Replace(GetObjectStr(EndPointTableStr, '  object', '  end'+#13#10),'');
+    SL.Text := SL.Text.Replace('{#EndPointComponent#}',EndPointTableStr);
+    SL.Text := SL.Text.Replace('{#EndPointConnection#}',ComponentToStringProc(FDConnection));
+    SL.Text := SL.Text.Replace('FDPhysIBDriverLink1: TFDPhysIBDriverLink',ConnectionToDriverLink(FDConnection));
+    SL.SaveToFile(TPath.Combine(AOutputPath,ServerTemplateDFMFile));
 
-  SL.LoadFromFile(TPath.Combine(ATemplatePath,ServerTemplatePASFile));
-  SL.Text := SL.Text.Replace('{#RootSegment#}',FDMemTableInfo.FieldByName('RootSegment').AsString);
-  SL.Text := SL.Text.Replace('{#MethodHeaderList#}',MethodHeaderList.Text);
-  SL.Text := SL.Text.Replace('{#MethodList#}',MethodList.Text);
-  SL.Text := SL.Text.Replace('FDPhysIBDriverLink1: TFDPhysIBDriverLink',ConnectionToDriverLink(FDConnection));
-  SL.SaveToFile(TPath.Combine(AOutputPath,ServerTemplatePASFile));
+    SL.LoadFromFile(TPath.Combine(ATemplatePath,ServerTemplatePASFile));
+    SL.Text := SL.Text.Replace('{#RootSegment#}',FDMemTableInfo.FieldByName('RootSegment').AsString);
+    SL.Text := SL.Text.Replace('{#MethodHeaderList#}',MethodHeaderList.Text);
+    SL.Text := SL.Text.Replace('{#MethodList#}',MethodList.Text);
+    SL.Text := SL.Text.Replace('FDPhysIBDriverLink1: TFDPhysIBDriverLink',ConnectionToDriverLink(FDConnection));
+    SL.Text := SL.Text.Replace(' FireDAC.Phys.IB,',' '+ConnectionToInclude(FDConnection)+',');
+    SL.SaveToFile(TPath.Combine(AOutputPath,ServerTemplatePASFile));
 
-  TFile.Copy(TPath.Combine(ATemplatePath,ServerTemplateDPKFile), TPath.Combine(AOutputPath,ServerTemplateDPKFile),True);
-  TFile.Copy(TPath.Combine(ATemplatePath,ServerTemplateDPROJFile), TPath.Combine(AOutputPath,ServerTemplateDPROJFile),True);
-  SL.Free;
-  MethodList.Free;
-  MethodHeaderList.Free;
+    TFile.Copy(TPath.Combine(ATemplatePath,ServerTemplateDPKFile), TPath.Combine(AOutputPath,ServerTemplateDPKFile),True);
+    TFile.Copy(TPath.Combine(ATemplatePath,ServerTemplateDPROJFile), TPath.Combine(AOutputPath,ServerTemplateDPROJFile),True);
+    SL.Free;
+    MethodList.Free;
+    MethodHeaderList.Free;
 
-  OpenDirectory(AOutputPath);
+    TThread.Synchronize(nil, procedure begin
+      OpenDirectory(AOutputPath);
+      Activity.Stop;
+    end);
+    if GenAllTimer.Tag = STAGE_BUSY then GenAllTimer.Tag := STAGE_2;
+  end).Start;
 end;
 
 procedure TMainForm.GenSolutionRectBTNClick(Sender: TObject);
 begin
-  GenServerRectBTNClick(Sender);
-  GenClientRectBTNClick(Sender);
-
-  GenOpenAPIRectBTNClick(Sender);
-
+  GenAllTimer.Tag := STAGE_1;
+  GenAllTimer.Enabled := True;
 end;
 
 procedure TMainForm.GetGroups;
@@ -1556,6 +1811,7 @@ LEMSClientAPI: TEMSClientAPI;
 begin
   if BackendGroups.Tag = NOT_BUSY then
   begin
+    Activity.Start;
     BackendGroups.Tag := BUSY;
     ITask(TTask.Create(
       procedure
@@ -1582,7 +1838,10 @@ begin
 
         finally
           BackendGroups.Tag := NOT_BUSY;
-        end;
+          TThread.Synchronize(nil, procedure begin
+            Activity.Stop;
+          end);
+      end;
       end)).Start;
   end;
 end;

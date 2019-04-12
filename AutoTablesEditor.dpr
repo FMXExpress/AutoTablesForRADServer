@@ -7,7 +7,8 @@ uses
   uPicker in 'uPicker.pas' {PickerForm},
   uSelector in 'uSelector.pas' {SelectorForm},
   uOpenAPI in 'uOpenAPI.pas' {OpenAPIDM: TDataModule},
-  uDelphiSDK in 'uDelphiSDK.pas' {DelphiSDKFrame: TFrame};
+  uDelphiSDK in 'uDelphiSDK.pas' {DelphiSDKFrame: TFrame},
+  uActivityFrame in 'uActivityFrame.pas' {ActivityFrame: TFrame};
 
 {$R *.res}
 

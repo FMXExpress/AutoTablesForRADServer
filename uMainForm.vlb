@@ -7,7 +7,7 @@ Coordinates=10,10,99,36
 Visible=False
 
 []
-Coordinates=0,298,67,36
+Coordinates=1031,53,97,36
 Visible=True
 
 [BindingsList1]
@@ -268,9 +268,6 @@ Visible=False
 [BindSourceDB1]
 Coordinates=770,726,116,102
 
-[Rectangle10]
-Coordinates=458,160,87,36
-
 [Text6]
 Coordinates=166,272,47,58
 
@@ -289,9 +286,6 @@ Visible=True
 
 [Text7]
 Coordinates=454,610,47,58
-
-[Rectangle11]
-Coordinates=83,623,87,36
 
 [EndpointConfigLayout]
 Coordinates=286,10,141,36
@@ -782,9 +776,6 @@ Coordinates=941,1213,60,58
 [IBLayout]
 Coordinates=937,108,67,36
 
-[FDConnection]
-Coordinates=1031,53,97,36
-
 [CompleteTab]
 Coordinates=157,552,69,36
 
@@ -793,4 +784,10 @@ Coordinates=1142,961,69,36
 
 [Step4Tab]
 Coordinates=458,212,69,36
+
+[GenAPIButtonRect]
+Coordinates=458,160,87,36
+
+[ResetAPIButtonRect]
+Coordinates=83,623,87,36
 

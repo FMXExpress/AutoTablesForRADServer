@@ -149,6 +149,7 @@ begin
           SL.Clear;
           SL.CommaText := ADataSet.FieldByName('Params').AsString;
 
+          QueryString := '';
           for I := 0 to SL.Count-1 do
             begin
               QueryString := QueryString + IfThen(I=0,'?','&') + SL[I] + '={' + SL[I] + '}';

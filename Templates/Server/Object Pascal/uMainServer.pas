@@ -20,9 +20,15 @@ uses
   {$IFDEF MSWINDOWS}
   , Windows
   {$ENDIF}
+  {$IFDEF LINUX}
+  , Posix.Base, Posix.Fcntl
+  {$ENDIF}
   ;
 
 type
+{$IFDEF LINUX}
+  TStreamHandle = pointer;
+{$ENDIF}
   TMyFuncType = function(AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream of object;
   [ResourceName('{#RootSegment#}')]
   TAutoTablesResource = class(TDataModule)
@@ -87,6 +93,13 @@ type
     FIELD_GROUPS = 'Groups';
     FIELD_UNIQUEID = 'UniqueID';
 
+{$IFDEF LINUX}
+  function popen(const command: MarshaledAString; const _type: MarshaledAString): TStreamHandle; cdecl; external libc name _PU + 'popen';
+  function pclose(filehandle: TStreamHandle): int32; cdecl; external libc name _PU + 'pclose';
+  function fgets(buffer: pointer; size: int32; Stream: TStreamHAndle): pointer; cdecl; external libc name _PU + 'fgets';
+{$ENDIF}
+ 
+
 implementation
 
 {%CLASSGROUP 'System.Classes.TPersistent'}
@@ -147,6 +160,32 @@ begin
       end;
   finally
     CloseHandle(StdOutPipeRead);
+  end;
+end;
+{$ENDIF}
+
+{$IFDEF LINUX}
+// https://stackoverflow.com/questions/44415054/execute-external-program-from-linux-delphi-10-2-console-application
+function GetLinuxOutput(ACommand : string) : TStringList;
+var
+  Handle: TStreamHandle;
+  Data: array[0..511] of uint8;
+  M : TMarshaller;
+ 
+begin
+  Result := TStringList.Create;
+  try
+    Handle := popen(M.AsAnsi(PWideChar(ACommand)).ToPointer,'r');
+    try
+      while fgets(@data[0],Sizeof(Data),Handle)<>nil do begin
+        Result.Add(Copy(UTF8ToString(@Data[0]),1,UTF8ToString(@Data[0]).Length -1));//,sizeof(Data)));
+      end;
+    finally
+      pclose(Handle);
+    end;
+  except
+    on E: Exception do
+      Result.Add(E.ClassName + ': ' + E.Message);
   end;
 end;
 {$ENDIF}
@@ -436,7 +475,25 @@ begin
         end;
       GenQuery.Close;
       GenQuery.Free;
+    end
+  else if (AConnection.DriverName='Ora') then
+    begin
+      // Getting sequence name for Oracle is untested
+      //GenQuery := TFDQuery.Create(Self);
+      //GenQuery.Connection := AConnection;
+      //GenQuery.Open('SELECT trigger_body FROM user_triggers WHERE table_name = :P1 AND triggering_event = 'INSERT' AND UPPER(dbms_metadata.get_ddl ('TRIGGER', trigger_name)) LIKE ''%PROCESO_ID_SEQ%''',[ATableName]);
+      //GenQuery.First;
+      //if GenQuery.FindField('trigger_body')<>nil then
+      //  begin
+      //    QuerySource := GenQuery.FieldByName('trigger_body').AsWideString;
+      //    AGenName := QuerySource.Substring(QuerySource.IndexOf(' := ')+4);
+      //    AGenName := AGenName.Replace(AGenName.Substring(AGenName.IndexOf('.nextval')),'');
+      //    Result := AGenName;
+      //  end;
+      //GenQuery.Close;
+      //GenQuery.Free;
     end;
+   
 end;
 
 function TAutoTablesResource.ProcessPost(const EndPoint: String; AContext: TEndpointContext; ARequest: TEndpointRequest; AResponse: TEndpointResponse): TMemoryStream;
@@ -476,7 +533,9 @@ begin
 
               DataTable.Connection := FDConnection;
               //DataTable.LocalSQL := FDLocalSQL1;
-              DataTable.Open('SELECT * FROM ' + EndPoints.DataSet.FieldByName(FIELD_TABLENAME).AsString + ' WHERE 0=1');
+              DataTable.SQL.Text := 'SELECT * FROM ' + EndPoints.DataSet.FieldByName(FIELD_TABLENAME).AsString + ' WHERE ' + EndPoints.DataSet.FieldByName(FIELD_UNIQUEID).AsString + '=&UniqueId';
+              DataTable.MacroByName('UniqueId').AsString := RequestTable.FieldByName(EndPoints.DataSet.FieldByName(FIELD_UNIQUEID).AsString).AsString;
+              DataTable.Open;
 
               AGenName := GetTableGenerator(FDConnection, EndPoints.DataSet.FieldByName(FIELD_TABLENAME).AsString);
 
@@ -499,7 +558,9 @@ begin
                        begin
                         DataTable.Edit;
                         CanPostData := True;
-                       end;
+                       end
+                      else
+                        AResponse.RaiseNotFound('Not Found','Unique ID not found.');
                     end;
 
                   if CanPostData=True then
@@ -519,7 +580,12 @@ begin
                             end;
                         end;
                       DataTable.Post;
-                      ResponseTable.AppendRecord([VarToStr(FDConnection.GetLastAutoGenValue(AGenName))]);
+                      if RequestTable.FieldByName(EndPoints.DataSet.FieldByName(FIELD_UNIQUEID).AsString).AsInteger=0 then
+                        begin
+                          ResponseTable.AppendRecord([VarToStr(FDConnection.GetLastAutoGenValue(AGenName))]);
+                        end
+                      else
+                        ResponseTable.AppendRecord([VarToStr(DataTable.FieldByName(EndPoints.DataSet.FieldByName(FIELD_UNIQUEID).AsString).AsString)]);
                     end;
 
                   RequestTable.Next;

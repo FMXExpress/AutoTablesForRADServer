@@ -61,6 +61,7 @@ var
 begin
 
     CompCount := 1;
+    EndPointTable.DisableControls;
     EndPointTable.First;
     FunctionList := TStringList.Create;
     HeaderList := TStringList.Create;
@@ -133,6 +134,7 @@ begin
         Inc(CompCount);
       end;
     SL.Free;
+  EndPointTable.EnableControls;
 
   ATemplatePath := TPath.Combine(TPath.Combine(TPath.Combine(ExtractFilePath(ParamStr(0)),TemplatePath),SDKPath),OPLangPath);
   AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
