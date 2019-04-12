@@ -2,7 +2,9 @@
 Automatically generated OpenEMR REST API client and server.
 
 # Product Overview
-The OpenEMR REST API Client Server was generated using AutoTables for RAD Server using the OpenEMR database schema from https://github.com/openemr/openemr This project is not affiliated with the OpenEMR project. The OpenEMR REST client compiles for Android, IOS, macOS, Windows, and Linux (using FMXLinux). The OpenEMR REST Server compiles for RAD Server. This project provides basic CRUD operations for the OpenEMR database. It includes listing data in a table, adding a new record in a table, editing a record in a table, and deleting a record in a table. There are over 500 tables in OpenEMR which provides a good demo of the AutoTables for RAD Server project. The API is fully documented in the Swagger 2.0 format.
+The OpenEMR REST API Client Server was generated using AutoTables for RAD Server using the OpenEMR database schema from https://github.com/openemr/openemr OpenEMR is a "leading open-source electronic medical record and practice management software." The Auto Tables for RAD Server project is not affiliated with the OpenEMR project. The OpenEMR REST client compiles for Android, IOS, macOS, Windows, and Linux (using FMXLinux). The OpenEMR REST Server compiles for RAD Server. This project provides basic CRUD operations for the OpenEMR database. It includes listing data in a table, adding a new record in a table, editing a record in a table, and deleting a record in a table. There are over 500 tables in OpenEMR which provides a good demo of the AutoTables for RAD Server project. The API is fully documented in the Swagger 2.0 format.
+
+# Compilation
 
 The REST API client and server compile using Embarcadero Delphi 10.3.1.
 
@@ -10,6 +12,10 @@ The REST API client may compile using the free Embarcadero Delphi 10.3.1 Communi
 https://www.embarcadero.com/products/delphi/starter
 
 The REST API server will compile using Embarcadero Delphi 10.3.1 Enterprise or Architect.
+
+# Configuration
+You will need to edit the FDConnection component in the RAD Server project to enter your MySQL username, password, and hostname. Additionally, your database should be named openemr. Otherwise you will need to re-generate the project with Auto Tables for RAD Server using your specific database name.
+
 
 # OpenEMR REST Client List View
 ![Alt text](Screenshots/list.jpg?raw=true "List View")
