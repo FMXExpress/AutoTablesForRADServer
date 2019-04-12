@@ -12,10 +12,10 @@ https://www.embarcadero.com/products/delphi/starter
 The REST API server will compile using Embarcadero Delphi 10.3.1 Enterprise or Architect.
 
 # OpenEMR REST Client List View
-![Alt text](OpenEMR/Screenshots/list.jpg?raw=true "List View")
+![Alt text](Screenshots/list.jpg?raw=true "List View")
 
 # OpenEMR REST Client Details View
-![Alt text](OpenEMR/Screenshots/detail.jpg?raw=true "Detail View")
+![Alt text](Screenshots/detail.jpg?raw=true "Detail View")
 
 # Workaround:
 
