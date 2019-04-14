@@ -11,7 +11,7 @@ The REST API client and server compile using Embarcadero Delphi 10.3.1.
 The REST API client may compile using the free Embarcadero Delphi 10.3.1 Community Edition.
 https://www.embarcadero.com/products/delphi/starter
 
-The REST API server will compile using Embarcadero Delphi 10.3.1 Enterprise or Architect.
+The REST API server will compile using Embarcadero Delphi 10.3.1 Enterprise or Architect. It supports IIS and Apache on Windows, Apache on Linux, and a stand alone server on Windows and Linux.
 
 # Configuration
 You will need to edit the FDConnection component in the RAD Server project to enter your MySQL username, password, and hostname. Additionally, your database should be named openemr. Otherwise you will need to re-generate the project with Auto Tables for RAD Server using your specific database name.
