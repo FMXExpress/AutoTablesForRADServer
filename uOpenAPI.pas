@@ -14,7 +14,7 @@ type
     { Private declarations }
   public
     { Public declarations }
-    function CreateDoc(ADataSet, AInfoDataSet: TFDDataSet): String;
+    function CreateDoc(const AHost, APort: String; ADataSet, AInfoDataSet: TFDDataSet): String;
   end;
 
 var
@@ -88,7 +88,7 @@ begin
   Result.AddPair('properties', vJsonProperities);
 end;
 
-function TOpenAPIDM.CreateDoc(ADataSet,AInfoDataSet: TFDDataSet): String;
+function TOpenAPIDM.CreateDoc(const AHost, APort: String; ADataSet,AInfoDataSet: TFDDataSet): String;
 var
   I: Integer;
   SL: TStringList;
@@ -118,7 +118,7 @@ begin
     vSwagDoc.Info.License.Name := AInfoDataSet.FieldByName('LicenseName').AsString;
     vSwagDoc.Info.License.Url := AInfoDataSet.FieldByName('LicenseURL').AsString;
 
-    vSwagDoc.Host := 'example.com';
+    vSwagDoc.Host := AHost + ':' + APort;
     vSwagDoc.BasePath := '/'+AInfoDataSet.FieldByName('RootSegment').AsString;
 
     vSwagDoc.Consumes.Add('application/json');

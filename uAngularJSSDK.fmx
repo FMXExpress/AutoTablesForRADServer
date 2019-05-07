@@ -1,0 +1,227 @@
+object AngularJSSDKFrame: TAngularJSSDKFrame
+  Size.Width = 539.000000000000000000
+  Size.Height = 441.000000000000000000
+  Size.PlatformDefault = False
+  object HeaderFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Align = Bottom
+    Position.Y = 10.000000000000000000
+    Size.Width = 539.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Viewport.Width = 539.000000000000000000
+    Viewport.Height = 24.000000000000000000
+  end
+  object GetFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      '$scope.{#EndPoint#}{#ParamString#} {'
+      '  if ($scope.LoginAPI($scope.Username,$scope.Password)==true) {'
+      
+        '    return $scope.GetAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#QueryS' +
+        'tring#});'
+      '  }'
+      '}')
+    Align = Bottom
+    Position.Y = 34.000000000000000000
+    Size.Width = 539.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Viewport.Width = 539.000000000000000000
+    Viewport.Height = 88.000000000000000000
+  end
+  object SDKMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      
+        '        angular.module('#39'{#Filename#}'#39', ['#39'ui.bootstrap'#39', '#39'ngCooki' +
+        'es'#39'])'
+      
+        '            .controller('#39'AutoTablesClientApp'#39', function($scope, ' +
+        '$http, $cookies, $timeout) {'
+      ''
+      '                $scope.URLHost = '#39'{#URLHost#}'#39';'
+      '                $scope.URLPort = '#39'{#URLPort#}'#39';'
+      '                $scope.Username = '#39'{#Username#}'#39';'
+      ''
+      '                $scope.Password = '#39'{#Password#}'#39';'
+      #9#9'$scope.LoggedIn = false;'
+      #9#9'$scope.SessionToken = '#39#39';'
+      
+        '                $scope.TenantId = $cookies.get('#39'TenantId'#39'); //'#39'0' +
+        '0000000-0000-0000-0000-000000000001'#39';'
+      
+        '                $scope.TenantSecret = $cookies.get('#39'TenantSecret' +
+        #39'); //'#39'secret'#39';'
+      #9#9
+      ''
+      '                $scope.getServerURL = function() {'
+      #9#9'return '#39'http://'#39'+$scope.URLHost+'#39':'#39'+$scope.URLPort;'
+      #9#9'}'
+      ''
+      '                $scope.getTenantId = function() {'
+      '                    return $scope.TenantId;'
+      '                }'
+      ''
+      '                $scope.getTenantSecret = function() {'
+      '                    return $scope.TenantSecret;'
+      '                }'
+      ''
+      '                $scope.getSessionToken = function() {'
+      '                    return $scope.SessionToken;'
+      '                }'
+      ''
+      '                $scope.GetHeader = function() {'
+      '                    if ($scope.LoggedIn==true) {'
+      
+        '                    '#9'return { headers: {'#39'X-Embarcadero-Session-T' +
+        'oken'#39': $scope.getSessionToken(), '#39'X-Embarcadero-Tenant-Id'#39': $sco' +
+        'pe.getTenantId(),'#39'X-Embarcadero-Tenant-Secret'#39': $scope.getTenant' +
+        'Secret() } }'
+      '                    } else {'
+      
+        '                    '#9'return { headers: { '#39'X-Embarcadero-Tenant-I' +
+        'd'#39': $scope.getTenantId(), '#39'X-Embarcadero-Tenant-Secret'#39': $scope.' +
+        'getTenantSecret() } }'
+      '                    }'
+      '                } '
+      ''
+      ''
+      '                $scope.LoginAPI = function(username, password) {'
+      '                    if ($scope.LoggedIn==false) {'
+      #9#9#9'    var post_data = JSON.stringify({'
+      #9#9#9#9'"username": username,'
+      #9#9#9#9'"password": password'
+      #9#9#9'    });'
+      
+        #9#9#9'    $http.post($scope.getServerURL() + '#39'users/login'#39', post_da' +
+        'ta, {'
+      #9#9#9#9'    headers: {'
+      #9#9#9#9#9#39'X-Embarcadero-Tenant-Id'#39': $scope.getTenantId(),'
+      #9#9#9#9#9#39'X-Embarcadero-Tenant-Secret'#39': $scope.getTenantSecret()'
+      #9#9#9#9'    }'
+      #9#9#9#9'})'
+      #9#9#9#9'.then(function(response) {'
+      #9#9#9#9'    $scope.SessionToken = response.data.sessionToken;'
+      #9#9#9#9'    $cookies.put('#39'username'#39', username);'
+      #9#9#9#9'    $cookies.put('#39'password'#39', password);'
+      #9#9#9#9'    $scope.LoggedIn = true;'
+      ''
+      #9#9#9#9'    return true;'
+      #9#9#9#9'}, function(response) {'
+      #9#9#9#9'    $scope.errormsg = response.data'
+      #9#9#9#9'    $scope.LoggedIn = false;'
+      #9#9#9#9'    return false;                        '
+      #9#9#9#9'});'
+      #9#9#9'} else {'
+      #9#9#9#9'return true;'
+      #9#9#9'}'
+      '                }'
+      ''
+      '                $scope.GetAPI = function(apath) {'
+      
+        '                    $http.get($scope.getServerURL() + apath, $sc' +
+        'ope.getHeader()).'
+      '                    then(function(response) {'
+      
+        '                        return response.data["FDBS"]["Manager"][' +
+        '"TableList"][0]["RowList"];'
+      '                    }, function(response) {'
+      '                           return response.data'
+      '                        });'
+      ''
+      '                }'
+      ''
+      '                $scope.PostAPI = function(apath,abody) {'
+      
+        '                    $http.post($scope.getServerURL() + apath, ab' +
+        'ody, $scope.getHeader()).'
+      '                    then(function(response) {'
+      
+        '                        return response.data["FDBS"]["Manager"][' +
+        '"TableList"][0]["RowList"];'
+      '                    }, function(response) {'
+      '                            return response.data'
+      '                        });'
+      ''
+      '                }'
+      ''
+      '                $scope.DeleteAPI = function(apath) {'
+      
+        '                    $http.get($scope.getServerURL() + apath, $sc' +
+        'ope.getHeader()).'
+      '                    then(function(response) {'
+      
+        '                        return response.data["FDBS"]["Manager"][' +
+        '"TableList"][0]["RowList"];'
+      '                    }, function(response) {'
+      '                            return response.data'
+      '                        });'
+      ''
+      '                }'
+      ''
+      '{#SDKFunctionList#}'
+      ''
+      '            });')
+    Align = Bottom
+    Position.Y = 210.000000000000000000
+    Size.Width = 539.000000000000000000
+    Size.Height = 143.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    Viewport.Width = 539.000000000000000000
+    Viewport.Height = 143.000000000000000000
+  end
+  object PostFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      '$scope.{#EndPoint#}{#ParamString#} {'
+      '  if ($scope.LoginAPI($scope.Username,$scope.Password)==true) {'
+      
+        '    return $scope.PostAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#Query' +
+        'String#},abody);'
+      '  }'
+      '}')
+    Align = Bottom
+    Position.Y = 122.000000000000000000
+    Size.Width = 539.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Viewport.Width = 539.000000000000000000
+    Viewport.Height = 88.000000000000000000
+  end
+  object DeleteFunctionMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Lines.Strings = (
+      '$scope.{#EndPoint#}{#ParamString#} {'
+      '  if ($scope.LoginAPI($scope.Username,$scope.Password)==true) {'
+      
+        '    return $scope.DeleteAPI('#39'/{#RootSegment#}/{#EndPoint#}/{#Que' +
+        'ryString#});'
+      '  }'
+      '}')
+    Align = Bottom
+    Position.Y = 353.000000000000000000
+    Size.Width = 539.000000000000000000
+    Size.Height = 88.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Viewport.Width = 539.000000000000000000
+    Viewport.Height = 88.000000000000000000
+  end
+  object ActionList1: TActionList
+    Left = 80
+    Top = 96
+    object GenerateSDKAction: TAction
+      Text = 'GenerateSDKAction'
+    end
+  end
+end

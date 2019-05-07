@@ -327,6 +327,11 @@ type
     GridFormBTN: TSpeedButton;
     DashFormBTN: TSpeedButton;
     FDConnection: TFDConnection;
+    GenerateAngularJSSDKAction: TAction;
+    UncheckAllBTN: TLabel;
+    Label66: TLabel;
+    CheckAllBTN: TLabel;
+    Label65: TLabel;
     procedure RequestTypeEditClick(Sender: TObject);
     procedure TableNameEditClick(Sender: TObject);
     procedure GroupsEditClick(Sender: TObject);
@@ -357,6 +362,9 @@ type
     procedure SampleDBRectBTNClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure GenAllTimerTimer(Sender: TObject);
+    procedure GenerateAngularJSSDKActionExecute(Sender: TObject);
+    procedure CheckAllBTNClick(Sender: TObject);
+    procedure UncheckAllBTNClick(Sender: TObject);
   private
     { Private declarations }
     procedure UpdateSQLLabel;
@@ -404,7 +412,9 @@ type
     ClientTemplateMFPASCFile = 'uMainFormC.pas';
 
     SDKTemplateFile = 'sdktemplatefile.pas';
+    AngularJSSDKTemplateFile = 'angularjssdktemplatefile.pas';
     DelphiSDKPASFile = 'AutoTablesDelphiSDK.pas';
+    AngularJSSDKPASFile = 'AutoTablesAngularJSSDK.js';
     OpenAPIDocsFile = 'apispec.json';
     EndpointFile = 'endpoints.json';
     BUSY = 1;
@@ -427,7 +437,7 @@ implementation
 {$R *.fmx}
 
 uses
-  uOpenAPI, uPicker, uSelector, uDelphiSDK;
+  uOpenAPI, uPicker, uSelector, uDelphiSDK, uAngularJSSDK;
 
 function ComponentToStringProc(Component: TComponent): string;
 var
@@ -457,6 +467,19 @@ begin
 {$IF DEFINED(MSWINDOWS)}
   ShellExecute(0, 'OPEN', PChar(APath), '', '', SW_SHOWNORMAL);
 {$ENDIF}
+end;
+
+procedure TMainForm.UncheckAllBTNClick(Sender: TObject);
+var
+I: Integer;
+begin
+  for I := 0 to TablesListBox.Items.Count-1 do
+    begin
+      if TablesListBox.ListItems[I].IsChecked = True then
+        begin
+          TablesListBox.ListItems[I].IsChecked := False;
+        end;
+    end;
 end;
 
 procedure TMainForm.UpdateSQLLabel;
@@ -1135,6 +1158,7 @@ begin
 
     GenerateDelphiClientAction.Execute;
     GenerateDelphiClientSDKAction.Execute;
+    //GenerateAngularJSSDKAction.Execute;
 
     AOutputPath := TPath.Combine(ExtractFilePath(ParamStr(0)),OutputPath);
 
@@ -1144,6 +1168,20 @@ begin
       Activity.Stop;
     end);
     if GenAllTimer.Tag = STAGE_BUSY then GenAllTimer.Tag := STAGE_4;
+  end).Start;
+end;
+
+procedure TMainForm.GenerateAngularJSSDKActionExecute(Sender: TObject);
+var
+AGenerator: TAngularJSSDKFrame;
+begin
+  TTask.Create(procedure begin
+    TThread.Synchronize(nil,procedure begin
+      AGenerator := TAngularJSSDKFrame.Create(Self);
+      AGenerator.Initialize(HostEdit.Text,PortEdit.Text,EndPointTable,FDMemTableInfo);
+      AGenerator.GenerateSDK(AngularJSSDKPASFile);
+      AGenerator.Free;
+    end);
   end).Start;
 end;
 
@@ -1532,7 +1570,7 @@ begin
       end;
 
     SL := TStringList.Create;
-    SL.Text := OpenAPIDM.CreateDoc(EndPointTable,FDMemTableInfo);
+    SL.Text := OpenAPIDM.CreateDoc(HostEdit.Text,PortEdit.Text,EndPointTable,FDMemTableInfo);
     SL.SaveToFile(TPath.Combine(AOutputPath,OpenAPIDocsFile));
     TThread.Synchronize(nil,procedure begin
       OpenAPIMemo.Lines.Text := SL.Text;
@@ -1601,6 +1639,19 @@ begin
       Result := Copy(Value, aPos, bPos - aPos);
     end;
   end;
+end;
+
+procedure TMainForm.CheckAllBTNClick(Sender: TObject);
+var
+I: Integer;
+begin
+  for I := 0 to TablesListBox.Items.Count-1 do
+    begin
+      if TablesListBox.ListItems[I].IsChecked = False then
+        begin
+          TablesListBox.ListItems[I].IsChecked := True;
+        end;
+    end;
 end;
 
 function TMainForm.ConnectionToDriverLink(AConnection: TFDConnection): String;

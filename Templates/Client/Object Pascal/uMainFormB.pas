@@ -14,7 +14,7 @@ uses
   FireDAC.Comp.Client, FMX.ScrollBox, FMX.Grid, FMX.Controls.Presentation,
   FMX.MultiView, FMX.ListView, FireDAC.Stan.StorageBin, FMX.StdCtrls,
   FMX.TabControl, FMX.Objects, FMX.Layouts, FMX.Platform, FMX.DialogService.Async,
-  FireDAC.Stan.StorageJSON, FMX.Ani, System.Threading, System.Math;
+  FireDAC.Stan.StorageJSON, FMX.Ani, System.Threading, System.Math, FMX.Edit;
 
 type
   TMainForm = class(TForm)
@@ -32,8 +32,8 @@ type
     HeaderRect: TRectangle;
     LogoImage: TImage;
     TabControl: TTabControl;
-    TabItem1: TTabItem;
-    TabItem2: TTabItem;
+    ListTab: TTabItem;
+    DetailTab: TTabItem;
     DetailMT: TFDMemTable;
     BindSourceDBDetails: TBindSourceDB;
     SaveBTN: TButton;
@@ -56,6 +56,19 @@ type
     ActivityFloatAni: TFloatAnimation;
     ClipCircle: TCircle;
     ActivityTimer: TTimer;
+    MainTabControl: TTabControl;
+    LoginTab: TTabItem;
+    MainTab: TTabItem;
+    BackgroundRectangle: TRectangle;
+    LoginRect: TRectangle;
+    Label1: TLabel;
+    PasswordEdit: TEdit;
+    UsernameEdit: TEdit;
+    LoginButton: TButton;
+    GuestBTN: TButton;
+    Label2: TLabel;
+    Image1: TImage;
+    LogoutBTN: TButton;
     procedure FormCreate(Sender: TObject);
     procedure DetailsStringGridResized(Sender: TObject);
     procedure TableStringGridResized(Sender: TObject);
@@ -70,11 +83,15 @@ type
       const Row: Integer);
     procedure ActivityTimerTimer(Sender: TObject);
     procedure ListView1Change(Sender: TObject);
+    procedure LoginButtonClick(Sender: TObject);
+    procedure GuestBTNClick(Sender: TObject);
+    procedure LogoutBTNClick(Sender: TObject);
   private
     { Private declarations }
     CurrentItem: Integer;
     Closing: Boolean;
     RunOnce: Boolean;
+    LoggedIn: Boolean;
     procedure Log(const S: String);
     procedure LoadTable;
     procedure RefreshTable;
@@ -103,6 +120,36 @@ uses
 procedure TMainForm.Log(const S: string);
 begin
   TDialogServiceAsync.ShowMessage(S);
+end;
+
+procedure TMainForm.LoginButtonClick(Sender: TObject);
+begin
+  if LoginButton.Tag=NOT_BUSY then
+    AsyncTask(LoginButton,procedure begin
+      LoggedIn := AutoTablesClientDM.Login(UsernameEdit.Text,PasswordEdit.Text);
+    end,
+    procedure begin
+      if LoggedIn=True then
+        begin
+          MainTabControl.ActiveTab := MainTab;
+        end;
+    end,
+    procedure begin
+      Log('Login Error');
+    end);
+end;
+
+procedure TMainForm.LogoutBTNClick(Sender: TObject);
+begin
+  AsyncTask(LogoutBTN, procedure begin
+    AutoTablesClientDM.Logout;
+  end,
+  procedure begin
+    MainTabControl.ActiveTab := LoginTab;
+  end,
+  procedure begin
+    Log('Logout Error');
+  end);
 end;
 
 procedure TMainForm.LoadTable;
@@ -224,7 +271,7 @@ begin
           LinkGridToDataSourceBindSourceDBDetails.Active := True;
 
           DetailsStringGridResized(Sender);
-          TabControl.ActiveTab := TabItem2;
+          TabControl.ActiveTab := DetailTab;
         end
       else
         begin
@@ -280,7 +327,7 @@ begin
       LinkGridToDataSourceBindSourceDBDetails.Active := True;
 
       DetailsStringGridResized(Sender);
-      TabControl.ActiveTab := TabItem2;
+      TabControl.ActiveTab := DetailTab;
     end
   else
     begin
@@ -290,7 +337,7 @@ end;
 
 procedure TMainForm.BackBTNClick(Sender: TObject);
 begin
-  TabControl.ActiveTab := TabItem1;
+  TabControl.ActiveTab := ListTab;
 end;
 
 procedure TMainForm.DeleteBTNClick(Sender: TObject);
@@ -381,6 +428,12 @@ begin
 Application.OnIdle := ApplicationIdle;
 
 CurrentItem := -1;
+end;
+
+procedure TMainForm.GuestBTNClick(Sender: TObject);
+begin
+  if LoginButton.Tag=NOT_BUSY then
+    MainTabControl.ActiveTab := MainTab;
 end;
 
 procedure TMainForm.TableStringGridResized(Sender: TObject);

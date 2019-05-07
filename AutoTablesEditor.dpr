@@ -8,7 +8,8 @@ uses
   uSelector in 'uSelector.pas' {SelectorForm},
   uOpenAPI in 'uOpenAPI.pas' {OpenAPIDM: TDataModule},
   uDelphiSDK in 'uDelphiSDK.pas' {DelphiSDKFrame: TFrame},
-  uActivityFrame in 'uActivityFrame.pas' {ActivityFrame: TFrame};
+  uActivityFrame in 'uActivityFrame.pas' {ActivityFrame: TFrame},
+  uAngularJSSDK in 'uAngularJSSDK.pas' {AngularJSSDKFrame: TFrame};
 
 {$R *.res}
 
