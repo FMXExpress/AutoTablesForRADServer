@@ -10,7 +10,7 @@ uses
   REST.Backend.EMSProvider, FireDAC.Comp.Client, FireDAC.Stan.Intf,
   FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet,
-  FireDAC.Stan.StorageJSON;
+  FireDAC.Stan.StorageJSON, REST.Backend.Providers;
 
 type
   TGetFuncType = procedure of object;
@@ -25,6 +25,8 @@ type
     procedure CallGet(MethodName: string);
     procedure CallPost(MethodName: string);
     procedure CallDelete(MethodName: string; const ID: String);
+    function Login(const UserName, Password: String): Boolean;
+    procedure Logout;
   published
 {#HeaderList#}
   end;
@@ -61,6 +63,38 @@ begin
   M.Code := Self.MethodAddress(MethodName); //find method code
   M.Data := Pointer(Self); //store pointer to object instance
   TDeleteFuncType(m)(ID);
+end;
+
+function TAutoTablesClientDM.Login(const UserName, Password: String): Boolean;
+begin
+  if not BackendAuth1.LoggedIn then
+    begin
+      BackendAuth1.UserName := UserName;
+      BackendAuth1.Password := Password;
+      BackendAuth1.Login;
+
+      if BackendAuth1.LoggedIn then
+        begin
+          if BackendAuth1.LoggedInToken = '' then
+            begin
+              BackendAuth1.Authentication := TBackendAuthentication.Default;
+              Result := False;
+            end
+          else
+            begin
+              BackendAuth1.Authentication := TBackendAuthentication.Session;
+              Result := True;
+            end;
+        end;
+    end
+  else
+    Result := True;
+end;
+
+procedure TAutoTablesClientDM.Logout;
+begin
+  BackendAuth1.Logout;
+  BackendAuth1.Authentication := TBackendAuthentication.Default;
 end;
 
 {#FunctionList#}
