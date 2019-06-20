@@ -7,6 +7,38 @@ Auto Tables is an automatic low code REST API generator for RAD Server. The serv
 A graphical Auto Tables for RAD Server Endpoint Editor is provided to help you set up, create, and edit your Auto Tables for RAD Server endpoints. Once you configure your endpoints you can either generate a new RAD Server project or you can save them out for loading into an existing Auto Tables for RAD Server ResourceModule. The configuration format is the standard FireDAC JSON.
 Full source code for the Auto Tables RAD Server ResourceModule is provided so you control your REST API server. This gives you the freedom to enhance and modify the source code as needed for your own solutions.
 
+# FireDAC Databases:
+SAP Advantage
+SAP SQL Anywhere
+IBM DB2 Server
+Firebird
+InterBase
+IBM Informix
+Microsoft Access
+Microsoft SQL Server
+MySQL Server
+MariaDB
+Oracle Server
+PostgreSQL
+PostgreSQL Enterprise Server
+SQLite
+Teradata
+Generic ODBC sources:
+
+SAP Adaptive Server Enterprise
+IBM DB2 AS/400
+QuickBooks
+InterSystems Cache
+Pervasive SQL
+DBase
+Excel
+MicroFocus Cobol
+Ingres Database
+SAP MaxDB
+Clarion
+SolidDB
+Unify SQLBase
+
 # Endpoints Wizard
 ![Alt text](Screenshots/endpoints_wizard.jpg?raw=true "Endpoints wizard")
 
